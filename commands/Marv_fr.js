@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-
+const wait = require('node:timers/promises').setTimeout;
 
 const { OPENAI_API_KEY, DEEPL_API_KEY } = require('../config.json');
 
@@ -29,8 +29,6 @@ Marv: I'm not sure. I'll ask my friend Google.\n\
 You: hey whats up?\n\
 Marv: Nothing much. You?\n`;
 
-
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('marv_fr')
@@ -46,18 +44,23 @@ module.exports = {
         console.log(result.text)
         prompt += `You: ${result.text}\n`;
         const gptResponse = await openai.createCompletion({
-            model: "text-davinci-002",
+            model: "text-davinci-003",
             prompt: prompt,
-            max_tokens: 60,
-            temperature: 0.3,
-            top_p: 0.3,
+            max_tokens: 128,
+            temperature: 0.5,
+            top_p: 0.5,
             presence_penalty: 0,
             frequency_penalty: 0.5,
         });
-        console.log(gptResponse.data.choices[0].text)
+        console.log(gptResponse.data.choices[0].text);
         result = await translator.translateText(`${gptResponse.data.choices[0].text}`, null, 'fr');
         prompt += `${gptResponse.data.choices[0].text}\n`;
-        console.log(result.text)
-        await interaction.reply(`**${interaction.user.username} said to Marv :** ${message_Marv}\n**Marv a répondu :** ${result.text.substring(7)}`)
+        console.log(result.text);
+        //let channel = interaction.channel.fetch();
+        //channel.send(`"**${interaction.user.username} a dit à Marv :** ${message_Marv}\n**Marv a répondu :** ${result.text.substring(6)}"`)
+        await interaction.deferReply();
+        await wait(20000);
+        await interaction.editReply(`"**${interaction.user.username} a dit à Marv :** ${message_Marv}\n**Marv a répondu :** ${result.text.substring(6)}"`);
+        //await interaction.followUp({ content: `**${interaction.user.username} a dit Marv :** ${message_Marv}\nLa réponse de Marv est surement trop longue pour être affichée ici`, ephemeral: true })
     },
 };
