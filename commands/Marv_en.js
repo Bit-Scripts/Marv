@@ -44,6 +44,6 @@ module.exports = {
         });
         console.log(gptResponse.data.choices[0].text)
         prompt += `${gptResponse.data.choices[0].text}\n`;
-        await interaction.reply(`**${interaction.user.username} said to Marv :** ${message_Marv}\n**Marv replied :** ${gptResponse.data.choices[0].text.substring(7)}`)
+        await interaction.reply(`**${interaction.user.username} said to Marv :** ${message_Marv}\n**Marv replied :** ${gptResponse.data.choices[0].text.substring(6)}`)
     },
 };
