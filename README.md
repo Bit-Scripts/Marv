@@ -4,6 +4,12 @@ Marv est un chatbot qui répond aux questions à contrecœur. Il est écrit en P
 
 Ce dépôt Github est écrit en nodejs et est utilisable directement sur votre serveur discord grâce à Discordjs et openai (l'API officiel de OpenAI en nodejs), il s'agit d'un bot Discord couplé à OpenAI.
 
+## Construit avec
+
+* [Node.js](https://nodejs.org/en/) - Moteur d'exécution JavaScript.
+* [Discord.js](https://discord.js.org/#/) - Bibliothèque API Discord pour Node.js.
+* [OpenAI](https://openai.com/) - API OpenAI pour le traitement du langage naturel.
+
 ## Démarrage 
 
 Ces instructions vous permettront d'obtenir une copie du projet sur votre machine locale à des fins de développement et de test. 
