@@ -111,7 +111,7 @@ client.on("messageCreate", async (message) => {
 			laReponse = laReponse.text
 		}
 		console.log(laReponse);
-		message.channel.send(laReponse);
+		message.channel.send(laReponse.substring(6));
     }
 });
 
