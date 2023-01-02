@@ -1,0 +1,19 @@
+{
+	"token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", 
+	"clientId": "xxxxxxxxxxxxxxxxxxxxx",
+	"guildId": "xxxxxxxxxxxxxxxxxxxxxxxx",
+    "BOT_TOKEN": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "DEEPL_API_KEY": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+	"OPENAI_API_KEY": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxd",
+    "Help": {
+        "//token": "//for discord",
+        "//clientId": "//Id of conversation in OpenAI",
+		"//guildId": "//Id of Discord Server",
+		"//BOT_TOKEN": "//for discord",
+		"//DEEPL_API_KEY": "//Clé API de DEEPL",
+		"//OPENAI_API_KEY": "//Clé API de OpenAI",
+		"//config-example.json": "//rename into config.json",
+        "Name": "Help"
+    }
+}
+
