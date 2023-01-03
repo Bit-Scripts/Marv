@@ -1,13 +1,20 @@
-const { token, OPENAI_API_KEY, DEEPL_API_KEY } = require('./config.json');
+const { token, OPENAI_API_KEY, DEEPL_API_KEY, organization } = require('./config.json');
 const fs = require('node:fs');
 const path = require('node:path');
+//const axios = require('axios');
 
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, Events, GatewayIntentBits, ActivityType } = require('discord.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers] });
 
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+
+client.on("ready", () =>{
+	client.user.setPresence({
+		activities: [{ name: `/help`, type: ActivityType.Watching }]
+	});
+});
 
 for (const file of eventFiles) {
 	const filePath = path.join(eventsPath, file);
@@ -56,11 +63,13 @@ client.on(Events.InteractionCreate, async interaction => {
 const { Configuration, OpenAIApi } = require("openai");
 
 const configuration = new Configuration({
+	organization: organization,
     apiKey:  OPENAI_API_KEY,
 });
 
 
 const openai = new OpenAIApi(configuration);
+
 let prompt =`Marv is a chatbot that reluctantly answers questions.\n\
 You: How many pounds are in a kilogram?\n\
 Marv: This again? There are 2.2 pounds in a kilogram. Please make a note of this.\n\
@@ -113,6 +122,43 @@ client.on("messageCreate", async (message) => {
 		console.log(laReponse);
 		message.channel.send(laReponse.substring(6));
     }
+	/*
+	// Rejoignez tous les arguments en une chaîne de caractères séparée par des espaces
+	// Découpez la commande et ses arguments
+	const args = message.content.slice(1).trim().split(/ +/g);
+	
+	const command = args.shift().toLowerCase();
+
+	if (command === 'chat') {
+		
+		// Rejoignez tous les arguments en une chaîne de caractères séparée par des espaces
+		const chatMessage = args.join(' ');
+
+		// Envoyez une requête à l'API chatGPT-3
+		axios.post('https://api.openai.com/v1/chat', {
+			prompt: chatMessage,
+			model: 'text-davinci-002',
+			temperature: 0.5,
+			max_tokens: 128,
+			top_p: 0.5,
+			presence_penalty: 0,
+			frequency_penalty: 0.5,
+		}, {
+			headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${OPENAI_API_KEY}`,
+			},
+		}).then(response => {
+			// Envoyez la réponse de l'API à la chaîne de discussion
+			if (response.data.response) {
+				message.channel.send(response.data.response);
+			}
+		}).catch(error => {
+			console.error(error);
+			message.channel.send("Une erreur s'est produite lors de l'envoi de la requête à l'API chatGPT-3.");
+		});
+	}
+	*/
 });
 
 // Log in to Discord with your client's token

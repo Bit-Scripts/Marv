@@ -5,6 +5,7 @@
     "BOT_TOKEN": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "DEEPL_API_KEY": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 	"OPENAI_API_KEY": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxd",
+	"organization": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "Help": {
         "//token": "//for discord",
         "//clientId": "//Id of conversation in OpenAI",
@@ -12,6 +13,7 @@
 		"//BOT_TOKEN": "//for discord",
 		"//DEEPL_API_KEY": "//Clé API de DEEPL",
 		"//OPENAI_API_KEY": "//Clé API de OpenAI",
+		"//organization": "//organizationId surOpenAI",
 		"//config-example.json": "//rename into config.json",
         "Name": "Help"
     }
