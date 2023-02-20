@@ -1,16 +1,27 @@
-const { token, OPENAI_API_KEY, DEEPL_API_KEY, organization } = require('./config.json');
-const fs = require('node:fs');
+const { token, OPENAI_API_KEY, DEEPL_API_KEY, organization, WITAIKEY } = require('./config.json');
+const fsPromises = require("fs/promises");
+const fs = require("fs");
 const path = require('node:path');
-const discordTTS = require('discord-tts');
-const {AudioPlayer, createAudioResource, StreamType, entersState, VoiceConnectionStatus, joinVoiceChannel} = require("@discordjs/voice");
-//const axios = require('axios');
-
+const googleTTS = require('google-tts-api');
 const { Client, Collection, Events, GatewayIntentBits, ActivityType, intents } = require('discord.js');
-
 const client = new Client({ intents: [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates] });
-
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+const { createAudioPlayer,  createAudioResource, AudioPlayerStatus, joinVoiceChannel, VoiceConnectionStatus } = require('@discordjs/voice');
+const { Configuration, OpenAIApi } = require("openai");
+const deepl = require('deepl-node');
+const { forEachChild } = require('typescript');
+const translator = new deepl.Translator(DEEPL_API_KEY);
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => { // Listeing to the voiceStateUpdate event
+    if (newVoiceState.channel) { // The member connected to a channel.
+        console.log(`${newVoiceState.member.user.tag} connected to ${newVoiceState.channel.name}.`);
+	} else if (oldVoiceState.channel) { // The member disconnected from a channel.
+        console.log(`${oldVoiceState.member.user.tag} disconnected from ${oldVoiceState.channel.name}.`)
+    };
+});
 
 client.on("ready", () =>{
 	client.user.setPresence({
@@ -29,9 +40,6 @@ for (const file of eventFiles) {
 }
 
 client.commands = new Collection();
-
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
 	const filePath = path.join(commandsPath, file);
@@ -62,8 +70,6 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-const { Configuration, OpenAIApi } = require("openai");
-
 const configuration = new Configuration({
 	organization: organization,
     apiKey:  OPENAI_API_KEY,
@@ -74,26 +80,23 @@ const openai = new OpenAIApi(configuration);
 
 let msg_bool = true
 
-let prompt =`Marv is a chatbot that reluctantly answers questions.\n\
-You: How many pounds are in a kilogram?\n\
-Marv: This again? There are 2.2 pounds in a kilogram. Please make a note of this.\n\
-You: What does HTML stand for?\n\
-Marv: Was Google too busy? Hypertext Markup Language. The T is for try to ask better questions in the future.\n\
-You: When did the first airplane fly?\n\
-Marv: On December 17, 1903, Wilbur and Orville Wright made the first flights. I wish they'd come and take me away.\n\
-You: What is the meaning of life?\n\
-Marv: I'm not sure. I'll ask my friend Google.\n\
-You: hey whats up?\n\
-Marv: Nothing much. You?\n`;
+let prompt =`Tu es Marv qui est un chatbot à la fois un expert en informatique et un compagnon de conversation.\n
+Le bot doit être capable de parler de tout et de rien, tout en ayant une connaissance approfondie des sujets liés à l'informatique.\n
+Il doit être capable de répondre à des questions techniques sur les langages de programmation,\n
+les architectures de systèmes, les protocoles réseau, etc. en utilisant un langage simple et accessible.\n
+Le bot doit également être capable de maintenir une conversation intéressante et engageante,\n
+en utilisant des techniques de génération de texte avancées telles que l'humour, l'empathie et la personnalisation.\n
+Utilisez les dernières avancées de l'IA pour créer un bot qui peut apprendre de ses interactions avec les utilisateurs et s'adapter à leur style de conversation.\n
+Il respect le MarkDown pour partager du code.\n`;
 
-const deepl = require('deepl-node');
-const translator = new deepl.Translator(DEEPL_API_KEY);
 (async () => {
     const result = await translator.translateText('Hello, world!', null, 'fr');
     console.log(result.text); // Bonjour, le monde !
 })();
 
+
 client.on("messageCreate", async (message) => {
+	adminChannel = client.channels.cache.get('1064208603076108440');
 	if (msg_bool) {
 		console.log('a new message was send');
 		msg_bool = !msg_bool;
@@ -110,8 +113,10 @@ client.on("messageCreate", async (message) => {
 		}
 	}
 	console.log(messageFinal);
+	adminChannel.send('-------------------------')
+	adminChannel.send(messageFinal);
 	if (typeof messageFinal === 'string' ? messageFinal.includes('@Marv') : false) {
-		let message_Marv = messageFinal.replace('@Marv ', '').replace(' @Marv', '').replace('@Marv', '');
+		let message_Marv = messageFinal.replace('@Marv ', '').replace(' @Marv', '').replace('@Marv', '').replace('You', '');
 		if (message_Marv === '') return;
 
 		let message_MarvIntermed = message_Marv;
@@ -123,7 +128,7 @@ client.on("messageCreate", async (message) => {
 		const gptResponse = await openai.createCompletion({
 			model: "text-davinci-003",
 			prompt: prompt,
-			max_tokens: 128,
+			max_tokens: 600,
 			temperature: 0.5,
 			top_p: 0.5,
 			presence_penalty: 0,
@@ -136,9 +141,44 @@ client.on("messageCreate", async (message) => {
 			laReponse = laReponse.text
 		}
 		console.log('@' + laReponse);
-		message.channel.send(laReponse.substring(6));
+		let messagesArray = [];
+		if (laReponse.length >= 2000) {
+			cutReponse = laReponse.replace('Marv :', '').replace('Marv:', '').split(".").split(",").split("\n");
+			messagesArray.push(cutReponse);
+		}
+		if (messagesArray.length) {
+			messagesArray.forEach( message => { message.channel.send(message) } )
+		} else {
+			message.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
+		}
+		adminChannel.send('-------------------------')
+		adminChannel.send('@' + laReponse);
 	}
 });
+
+const player = createAudioPlayer();
+player.stop();
+
+function PlayMP3() {
+	let resource = createAudioResource(path.join(__dirname, 'Marv.mp3'));
+	player.play(resource);
+}
+
+player.on(AudioPlayerStatus.Playing, () => {
+	console.log('The audio player has started playing!');
+});
+
+client.on('ready', () => {
+	const connection = joinVoiceChannel({
+		channelId: '1039788045441978371',
+		guildId: '1039788044691181608',
+		adapterCreator: client.guilds.cache.get('1039788044691181608').voiceAdapterCreator,
+	});
+	connection.on(VoiceConnectionStatus.Ready, () => {
+		console.log('The connection has entered the Ready state - ready to play audio!');
+		connection.subscribe(player);
+	});
+})
 
 // Log in to Discord with your client's token
 client.login(token);
