@@ -3,7 +3,7 @@ const fsPromises = require("fs/promises");
 const fs = require("fs");
 const path = require('node:path');
 const googleTTS = require('google-tts-api');
-const { Client, Collection, Events, GatewayIntentBits, ActivityType, intents } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, ActivityType, Events } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates] });
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
