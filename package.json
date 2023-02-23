@@ -24,6 +24,7 @@
     "http": "^0.0.1-security",
     "libsodium": "^0.7.10",
     "libsodium-wrappers": "^0.7.10",
+    "n": "^9.0.1",
     "node-fs": "^0.1.7",
     "node-stream": "^1.7.0",
     "octokit": "^2.0.14",
