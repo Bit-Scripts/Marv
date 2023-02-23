@@ -24,6 +24,8 @@ const projectId = "marv-378607";
 const { createReadStream } = require('node:fs');
 const { join } = require('node:path');
 const { promisify } = require('util');
+const concat = require('n');
+
 global.onVocalAction = false;
 async function authenticateImplicitWithAdc() {
 	const storage = new Storage({
@@ -152,10 +154,16 @@ async function synthesizeSpeech(text) {
 }
 
 async function reconizeSpeech(user, audioContent) {
+	  // concaténer les morceaux de l'audio dans un seul fichier
+	const audioBuffer = await new Promise((resolve) => {
+		audioContent.pipe(concat({ encoding: 'buffer' }, (buffer) => {
+			resolve(buffer);
+		}));
+	});
 
 	// The audio file's encoding, sample rate in hertz, and BCP-47 language code
 	const audio = {
-		content: audioContent 	
+		content: audioBuffer.toString('base64'),
 	};
 	const config = {
 		encoding: 'LINEAR16',
