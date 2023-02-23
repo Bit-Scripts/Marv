@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const wait = require('node:timers/promises').setTimeout;
+const wait = require('node-timers/promises').setTimeout;
 
 const { OPENAI_API_KEY, DEEPL_API_KEY } = require('../config.json');
 
