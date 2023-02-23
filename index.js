@@ -1,19 +1,48 @@
-const { token, OPENAI_API_KEY, DEEPL_API_KEY, organization, WITAIKEY } = require('./config.json');
-const fsPromises = require("fs/promises");
+const { token, OPENAI_API_KEY, DEEPL_API_KEY, organization } = require('./config.json');
 const fs = require("fs");
 const path = require('node:path');
-const googleTTS = require('google-tts-api');
 const { Client, Collection, GatewayIntentBits, ActivityType, Events } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates] });
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-const { createAudioPlayer,  createAudioResource, AudioPlayerStatus, joinVoiceChannel, VoiceConnectionStatus } = require('@discordjs/voice');
+const { createDiscordJSAdapter,  demuxProbe, createAudioPlayer,  joinVoiceChannel, VoiceConnectionStatus, EndBehaviorType, createVoiceReceiver, voiceConnection, createListeningStream, AudioPlayerStatus, createAudioResource, StreamType } = require('@discordjs/voice');
 const { Configuration, OpenAIApi } = require("openai");
 const deepl = require('deepl-node');
-const { forEachChild } = require('typescript');
 const translator = new deepl.Translator(DEEPL_API_KEY);
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+const { PassThrough } = require('stream');
+const util = require('util');
+const speech = require('@google-cloud/speech');
+const textToSpeech = require('@google-cloud/text-to-speech');
+const {Storage} = require('@google-cloud/storage');
+const { SpeechClient } = require('@google-cloud/speech');
+const ffmpeg = require('ffmpeg');
+const { constants } = require('buffer');
+const { OpusEncoder } = require('@discordjs/opus');
+const projectId = "marv-378607";
+const { createReadStream } = require('node:fs');
+const { join } = require('node:path');
+const { promisify } = require('util');
+
+async function authenticateImplicitWithAdc() {
+	const storage = new Storage({
+		projectId,
+	});
+	const [buckets] = await storage.getBuckets();
+	console.log('Buckets:');
+
+	for (const bucket of buckets) {
+		console.log(`- ${bucket.name}`);
+	}
+
+	console.log('Listed all storage buckets.');
+}
+
+authenticateImplicitWithAdc();
+
+const tts = new textToSpeech.TextToSpeechClient();
+const stt = new speech.SpeechClient();
 
 client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => { // Listeing to the voiceStateUpdate event
     if (newVoiceState.channel) { // The member connected to a channel.
@@ -94,6 +123,57 @@ Il respect le MarkDown pour partager du code.\n`;
     console.log(result.text); // Bonjour, le monde !
 })();
 
+const player = createAudioPlayer();
+module.exports = {player}
+player.stop();
+
+async function PlayMP3(resource) {
+	resource = createAudioResource(path.join(__dirname, resource));
+	player.play(resource);
+}
+
+async function synthesizeSpeech(text) {
+	// Construct the request
+	const request = {
+		input: {text: text},
+		// Select the language and SSML voice gender (optional)
+		voice: {languageCode: 'fr-FR', name: 'fr-FR-Neural2-B',ssmlGender: 'MALE'},
+		// select the type of audio encoding
+		audioConfig: {audioEncoding: 'MP3'},
+	};
+
+	// Performs the text-to-speech request
+	const [response] = await tts.synthesizeSpeech(request);
+	// Write the binary audio content to a local file
+	const writeFile = util.promisify(fs.writeFile);
+	await writeFile('output.mp3', response.audioContent, 'binary');
+	await PlayMP3('output.mp3')
+	console.log('Audio content written to file: output.mp3');
+}
+
+async function reconizeSpeech(user, audioContent) {
+
+	// The audio file's encoding, sample rate in hertz, and BCP-47 language code
+	const audio = {
+		content: audioContent 	
+	};
+	const config = {
+		encoding: 'LINEAR16',
+		sampleRateHertz: 48000,
+		languageCode: 'fr-FR',
+	};
+	const request = {
+		audio: audio,
+		config: config,
+	};
+
+	// Detects speech in the audio file
+	const [response] = await stt.recognize(request);
+	const transcription = response.results
+	.map(result => result.alternatives[0].transcript)
+	.join('\n');
+	console.log(`Transcription: ${user} a dit ${transcription}`);
+}
 
 client.on("messageCreate", async (message) => {
 	adminChannel = client.channels.cache.get('1064208603076108440');
@@ -141,7 +221,9 @@ client.on("messageCreate", async (message) => {
 			laReponse = laReponse.text
 		}
 		console.log('@' + laReponse);
+
 		let messagesArray = [];
+		
 		if (laReponse.length >= 2000) {
 			cutReponse = laReponse.replace('Marv :', '').replace('Marv:', '').split(".").split(",").split("\n");
 			messagesArray.push(cutReponse);
@@ -151,33 +233,65 @@ client.on("messageCreate", async (message) => {
 		} else {
 			message.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
 		}
-		adminChannel.send('-------------------------')
+		synthesizeSpeech(laReponse.replace('Marv :', '').replace('Marv:', ''));
+		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
 	}
 });
 
-const player = createAudioPlayer();
-player.stop();
-
-function PlayMP3() {
-	let resource = createAudioResource(path.join(__dirname, 'Marv.mp3'));
-	player.play(resource);
-}
-
-player.on(AudioPlayerStatus.Playing, () => {
-	console.log('The audio player has started playing!');
-});
-
 client.on('ready', () => {
+
 	const connection = joinVoiceChannel({
 		channelId: '1039788045441978371',
 		guildId: '1039788044691181608',
 		adapterCreator: client.guilds.cache.get('1039788044691181608').voiceAdapterCreator,
+		selfDeaf: false,
+		selfMute: false,
+		group: client.user.id,
 	});
-	connection.on(VoiceConnectionStatus.Ready, () => {
-		console.log('The connection has entered the Ready state - ready to play audio!');
-		connection.subscribe(player);
+
+	console.log("Listener Is Joining Voice And Listening...");
+
+	const receiver = connection.receiver;
+
+	receiver.voiceConnection.on(VoiceConnectionStatus.Ready, () => {
+		console.log('The connection has entered the Ready state - ready to listen or to play audio!');
+		connection.subscribe(player);	
 	});
+
+	async function probeAndCreateResource(readableStream) {
+		const { stream, type } = await demuxProbe(readableStream);
+		return createAudioResource(stream, { inputType: type });
+	}
+	
+	receiver.speaking.on('start', async (UserId) => {
+		let UserSpeaker = client.users.cache.get(UserId).username;
+		console.log(`I'm now listening to ${UserSpeaker}`);
+		
+		let resource = createAudioResource(createReadStream(join(__dirname, 'marv.ogg')), {
+			inputType: StreamType.OggOpus,
+		});
+
+		const oggStream = await probeAndCreateResource(createReadStream(join(__dirname, 'marv.ogg'))); 
+
+		const oggBuffer = await promisify(fs.readFile)(join(__dirname, '/marv.ogg'));
+		console.log(`type of ${typeof oggBuffer}`);
+		if (client.users.cache.get(UserId) !== client.user) {
+			console.log(`${UserSpeaker} a dit quelquechose !`); 
+			//await reconizeSpeech(UserSpeaker, oggBuffer);
+		}
+		
+	});
+
+	receiver.speaking.on('stop', (UserId) => {
+		let UserSpeaker = client.users.cache.get(UserId).username;
+		console.log(`I'm no longer listening to ${UserSpeaker}`);
+	});
+	
+	player.on(AudioPlayerStatus.Idle, () => {
+		console.log('Audio player has become idle - no more audio to play!');
+	});
+	
 })
 
 // Log in to Discord with your client's token
