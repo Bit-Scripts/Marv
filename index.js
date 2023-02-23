@@ -24,7 +24,7 @@ const projectId = "marv-378607";
 const { createReadStream } = require('node:fs');
 const { join } = require('node:path');
 const { promisify } = require('util');
-
+global.onVocalAction = false;
 async function authenticateImplicitWithAdc() {
 	const storage = new Storage({
 		projectId,
@@ -124,12 +124,12 @@ Il respect le MarkDown pour partager du code.\n`;
 })();
 
 const player = createAudioPlayer();
-module.exports = {player}
-player.stop();
 
-async function PlayMP3(resource) {
+function PlayMP3(resource) {
 	resource = createAudioResource(path.join(__dirname, resource));
+	console.log('lancement de ma lecture')
 	player.play(resource);
+	global.onVocalAction = false
 }
 
 async function synthesizeSpeech(text) {
@@ -147,8 +147,8 @@ async function synthesizeSpeech(text) {
 	// Write the binary audio content to a local file
 	const writeFile = util.promisify(fs.writeFile);
 	await writeFile('output.mp3', response.audioContent, 'binary');
-	await PlayMP3('output.mp3')
 	console.log('Audio content written to file: output.mp3');
+	PlayMP3('output.mp3');
 }
 
 async function reconizeSpeech(user, audioContent) {
@@ -173,6 +173,7 @@ async function reconizeSpeech(user, audioContent) {
 	.map(result => result.alternatives[0].transcript)
 	.join('\n');
 	console.log(`Transcription: ${user} a dit ${transcription}`);
+	global.onVocalAction = false
 }
 
 client.on("messageCreate", async (message) => {
@@ -233,7 +234,10 @@ client.on("messageCreate", async (message) => {
 		} else {
 			message.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
 		}
-		synthesizeSpeech(laReponse.replace('Marv :', '').replace('Marv:', ''));
+		if (!global.onVocalAction){
+			global.onVocalAction = true
+			synthesizeSpeech(laReponse.replace('Marv :', '').replace('Marv:', ''));
+		}
 		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
 	}
@@ -254,7 +258,8 @@ client.on('ready', () => {
 
 	const receiver = connection.receiver;
 
-	receiver.voiceConnection.on(VoiceConnectionStatus.Ready, () => {
+	connection.on(VoiceConnectionStatus.Ready, () => {
+		client.voice.selfDeaf = false
 		console.log('The connection has entered the Ready state - ready to listen or to play audio!');
 		connection.subscribe(player);	
 	});
@@ -265,22 +270,34 @@ client.on('ready', () => {
 	}
 	
 	receiver.speaking.on('start', async (UserId) => {
-		let UserSpeaker = client.users.cache.get(UserId).username;
-		console.log(`I'm now listening to ${UserSpeaker}`);
-		
-		let resource = createAudioResource(createReadStream(join(__dirname, 'marv.ogg')), {
-			inputType: StreamType.OggOpus,
-		});
+		if (!global.onVocalAction){
+			global.onVocalAction = true
+			let UserSpeaker = client.users.cache.get(UserId).username;
+			console.log(`I'm now listening to ${UserSpeaker}`);
+			
+			const opusStream = receiver.subscribe(client.user.id, {
+				end: {
+					behavior: EndBehaviorType.AfterSilence,
+					duration: 1000,
+				},
+			});
 
-		const oggStream = await probeAndCreateResource(createReadStream(join(__dirname, 'marv.ogg'))); 
+			const chunks = [];
+			const content = chunks;
+			opusStream.on('readable', () => {
+			  let chunk;
+			  while (null !== (chunk = opusStream.read())) {
+				chunks.push(chunk);
+			  }
+			});
+			
+			opusStream.on('end', () => {
+			  	content = chunks.join('');
+			});
+			await reconizeSpeech(UserSpeaker, content);
 
-		const oggBuffer = await promisify(fs.readFile)(join(__dirname, '/marv.ogg'));
-		console.log(`type of ${typeof oggBuffer}`);
-		if (client.users.cache.get(UserId) !== client.user) {
-			console.log(`${UserSpeaker} a dit quelquechose !`); 
-			//await reconizeSpeech(UserSpeaker, oggBuffer);
+			global.onVocalAction = false
 		}
-		
 	});
 
 	receiver.speaking.on('stop', (UserId) => {
