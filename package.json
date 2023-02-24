@@ -24,7 +24,6 @@
     "http": "^0.0.1-security",
     "libsodium": "^0.7.10",
     "libsodium-wrappers": "^0.7.10",
-    "n": "^9.0.1",
     "node-events": "^0.0.2",
     "node-fs": "^0.1.7",
     "node-path": "^0.0.3",

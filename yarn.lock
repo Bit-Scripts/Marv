@@ -2574,11 +2574,6 @@
   "resolved" "https://registry.npmjs.org/mute-stream/-/mute-stream-0.0.8.tgz"
   "version" "0.0.8"
 
-"n@^9.0.1":
-  "integrity" "sha512-SsKwY5iFdKd3xpsT4ISFmRLnCVcx+eNMc2NIlxMQL+w6zKK4hjaMvSZf8V+Fq2ipVCuuLD2fhVJSA6cszfJq9g=="
-  "resolved" "https://registry.npmjs.org/n/-/n-9.0.1.tgz"
-  "version" "9.0.1"
-
 "needle@2.4.0":
   "integrity" "sha512-4Hnwzr3mi5L97hMYeNl8wRW/Onhy4nUKR/lVemJ8gJedxxUyBLm9kkrDColJvoSfwi0jCNhD+xCdOtiGDQiRZg=="
   "resolved" "https://registry.npmjs.org/needle/-/needle-2.4.0.tgz"

@@ -16,7 +16,8 @@ const speech = require('@google-cloud/speech');
 const textToSpeech = require('@google-cloud/text-to-speech');
 const {Storage} = require('@google-cloud/storage');
 const projectId = "marv-378607";
-const concat = require('concat-stream');
+const flac = require('node-flac');
+const encoder = new flac.FlacEncoder(48000, 2, 16);
 
 global.onVocalAction = false;
 async function authenticateImplicitWithAdc() {
@@ -145,11 +146,7 @@ async function synthesizeSpeech(text) {
 	PlayMP3('output.mp3');
 }
 
-async function reconizeSpeech(user, audioContent) {
-	// concaténer les morceaux de l'audio dans un seul fichier
-	const audioBuffers = [];
-	audioBuffers.push(audioContent);
-	const audioBuffer = Buffer.concat(audioBuffers.map((buf) => Buffer.from(buf)));
+async function reconizeSpeech(user, audioBuffer) {
 
 	// The audio file's encoding, sample rate in hertz, and BCP-47 language code
 	const audio = {
@@ -270,30 +267,71 @@ client.on('ready', () => {
 	receiver.speaking.on('start', async (UserId) => {
 		if (!global.onVocalAction){
 			global.onVocalAction = true
+
 			let UserSpeaker = client.users.cache.get(UserId).username;
 			console.log(`I'm now listening to ${UserSpeaker}`);
 			
-			const opusStream = receiver.subscribe(client.user.id, {
+			/*const opusStream = receiver.subscribe(client.user.id, {
 				end: {
 					behavior: EndBehaviorType.AfterSilence,
 					duration: 1000,
 				},
 			});
 
-			const chunks = [];
-			let content = chunks;
+			let opusBuffer = Buffer.alloc(0);
+
 			opusStream.on('readable', () => {
-			  let chunk;
-			  while (null !== (chunk = opusStream.read())) {
-				chunks.push(chunk);
-			  }
+			  	let chunk;
+			  	while (null !== (chunk = opusStream.read())) {
+					opusBuffer = Buffer.concat([opusBuffer, chunk]);
+				}
 			});
 			
-			opusStream.on('end', () => {
-			  	content = Buffer.concat(chunks.map((buf) => Buffer.from(buf)));
-			});
-			//await reconizeSpeech(UserSpeaker, content);
+			const mp3Buffer = opusStream.on('end', () => {
+				// Créer un décodeur Opus
+				const opusDecoder = new OpusScript(48000, 2, OpusScript.Application.AUDIO);
+			
+				// Décoder le buffer Opus en PCM brut
+				const pcmBuffer = opusDecoder.decode(opusBuffer);
+			
+				// Créer un flux de lecture à partir du PCM brut
+				const pcmStream = new Readable();
+				pcmStream.push(pcmBuffer);
+				pcmStream.push(null);
+			
+				// Créer un encodeur MP3
+				const mp3Encoder = new Lame.Lame({
+					output: "buffer",
+					channels: 2,
+					bitDepth: 16,
+					sampleRate: 48000,
+					bitRate: 128,
+					outSampleRate: 48000,
+					mode: Lame.STEREO,
+					//floatValue: false // Ajout de l'option floatValue: false pour utiliser des données PCM en entier
+				});
 
+				// Pipe le flux PCM brut vers l'encodeur MP3
+				pcmStream.pipe(mp3Encoder);
+
+				// Attendre la fin de l'encodage MP3
+				return new Promise((resolve, reject) => {
+					mp3Encoder.encode()
+					.then(async () => {
+						// Encodage terminé
+						mp3Buffer = mp3Encoder.outputBuffer;
+						resolve(mp3Buffer);
+						
+					})
+					.catch((error) => {
+						// Une erreur s'est produite
+						console.error(error);
+						reject(error);
+					});
+				});
+			});
+
+			await reconizeSpeech(UserSpeaker, mp3Buffer);*/
 			global.onVocalAction = false
 		}
 	});
