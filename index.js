@@ -1,21 +1,22 @@
 const { token, OPENAI_API_KEY, DEEPL_API_KEY, organization } = require('./config.json');
 const fs = require("fs");
-const path = require('node-path');
+const path = require('path');
 const { Client, Collection, GatewayIntentBits, ActivityType, Events } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates] });
-const eventsPath = path.join(__dirname, 'events');
+const eventsPath = path.join(__dirname, '/events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+const { EndBehaviorType, createAudioPlayer,  createAudioResource, AudioPlayerStatus, joinVoiceChannel, VoiceConnectionStatus } = require('@discordjs/voice');
 const { Configuration, OpenAIApi } = require("openai");
 const deepl = require('deepl-node');
 const translator = new deepl.Translator(DEEPL_API_KEY);
-const commandsPath = path.join(__dirname, 'commands');
+const commandsPath = path.join(__dirname, '/commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 const util = require('util');
 const speech = require('@google-cloud/speech');
 const textToSpeech = require('@google-cloud/text-to-speech');
 const {Storage} = require('@google-cloud/storage');
 const projectId = "marv-378607";
-const concat = require('n');
+const concat = require('concat-stream');
 
 global.onVocalAction = false;
 async function authenticateImplicitWithAdc() {
@@ -145,12 +146,10 @@ async function synthesizeSpeech(text) {
 }
 
 async function reconizeSpeech(user, audioContent) {
-	  // concaténer les morceaux de l'audio dans un seul fichier
-	const audioBuffer = await new Promise((resolve) => {
-		audioContent.pipe(concat({ encoding: 'buffer' }, (buffer) => {
-			resolve(buffer);
-		}));
-	});
+	// concaténer les morceaux de l'audio dans un seul fichier
+	const audioBuffers = [];
+	audioBuffers.push(audioContent);
+	const audioBuffer = Buffer.concat(audioBuffers.map((buf) => Buffer.from(buf)));
 
 	// The audio file's encoding, sample rate in hertz, and BCP-47 language code
 	const audio = {
@@ -282,7 +281,7 @@ client.on('ready', () => {
 			});
 
 			const chunks = [];
-			const content = chunks;
+			let content = chunks;
 			opusStream.on('readable', () => {
 			  let chunk;
 			  while (null !== (chunk = opusStream.read())) {
@@ -291,9 +290,9 @@ client.on('ready', () => {
 			});
 			
 			opusStream.on('end', () => {
-			  	content = chunks.join('');
+			  	content = Buffer.concat(chunks.map((buf) => Buffer.from(buf)));
 			});
-			await reconizeSpeech(UserSpeaker, content);
+			//await reconizeSpeech(UserSpeaker, content);
 
 			global.onVocalAction = false
 		}
