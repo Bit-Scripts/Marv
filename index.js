@@ -16,8 +16,6 @@ const speech = require('@google-cloud/speech');
 const textToSpeech = require('@google-cloud/text-to-speech');
 const {Storage} = require('@google-cloud/storage');
 const projectId = "marv-378607";
-const flac = require('node-flac');
-const encoder = new flac.FlacEncoder(48000, 2, 16);
 
 global.onVocalAction = false;
 async function authenticateImplicitWithAdc() {
