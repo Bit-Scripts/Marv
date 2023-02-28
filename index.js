@@ -95,7 +95,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		synthesizeSpeech(interactionMessage.content.replace('/',' slash ').replace('/',' slash ').replace('Low-Fuel','LowFuel').replace('-',' tiret ').replace('-',' tiret '), Marv_channel, speak)
 	} else {
 		PlayMP3('./monologue.mp3')
-	}	
+	}
 });
 
 const configuration = new Configuration({
@@ -126,6 +126,8 @@ function PlayMP3(resource) {
 	resource = createAudioResource(path.join(__dirname, resource));
 	console.log('lancement de la lecture')
 	player.play(resource);
+	speak = false
+	return speak
 }
 
 async function synthesizeSpeech(text, Marv_channel, speak) {
@@ -146,8 +148,6 @@ async function synthesizeSpeech(text, Marv_channel, speak) {
 	await writeFile('output.mp3', response.audioContent, 'binary');
 	console.log('Audio content written to file: output.mp3');
 	if (Marv_channel !== '1079588443929190420') PlayMP3('output.mp3');
-	speak = false
-	return speak
 }
 
 async function Marv(msg, speak) {
@@ -194,7 +194,7 @@ async function Marv(msg, speak) {
 		console.log('@' + laReponse);
 
 		let msgsArray = [];
-		
+
 		if (laReponse.length >= 2000) {
 			cutReponse = laReponse.replace('Marv :', '').replace('Marv:', '').split(".").split(",").split("\n");
 			msgsArray.push(cutReponse);
@@ -209,17 +209,24 @@ async function Marv(msg, speak) {
 
 		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
-	}	
+	}
 }
-
+message = ''
 client.on("speech", (msg) => {
 	// If bot didn't recognize speech, content will be empty
-	if (!msg.content || !speak) return;
+	if (!msg.content) return;
+	if (speak) {
+		message = message + msg.content + '. '
+	} else if (message === ''){
+		message = msg.content
+	}
 	marvChannel = client.channels.cache.get('1079588443929190420');
-	marvChannel.send('<@1058811530092748871> ' + msg.author.username + ' ' + msg.content?.replace('Marc', 'Marv'))
-	console.log(msg.author.username + ' ' + msg.content?.replace('Marc', 'Marv'))
+	marvChannel.send('<@1058811530092748871> ' + msg.author.username + ' ' + message.replace('Marc', 'Marv'))
+	console.log(msg.author.username + ' ' + message?.replace('Marc', 'Marv'))
 	//Marv(msg)
 	console.log(`${client.user.username} loading to Voice!`);
+	message = ''
+	return message
 });
 
 client.on("messageCreate", async (msg) => {

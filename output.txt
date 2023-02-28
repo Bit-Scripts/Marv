@@ -1,0 +1,5 @@
+{
+  "@type": "type.googleapis.com/google.cloud.speech.v1.LongRunningRecognizeResponse",
+  "requestId": "9057252826360588866",
+  "totalBilledTime": "0s"
+}
