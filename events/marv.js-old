@@ -1,0 +1,28 @@
+const { Events } = require('discord.js');
+const { addSpeechEvent } = require("discord-speech-recognition");
+
+module.exports = {
+	name: Events.joinVoiceChannel,
+	on: true,
+	execute(client) {
+
+		addSpeechEvent(client, { lang: 'fr-FR' });
+
+		console.log(`${client.user.tag} loading to Voice!`);
+		let channel = client.channels.cache.find(channel => channel.id === '1079588443929190420')
+		channel.send('<@1058811530092748871>');
+
+		client.once("speech", (msg) => {
+			if (msg.content) console.log(`${client.user.tag} is Ready to Talk!`);
+		});
+
+		client.on("speech", (msg) => {
+			// If bot didn't recognize speech, content will be empty
+			if (!msg.content) return;
+			
+			channel.send('<@1058811530092748871> ' + msg.content);
+			console.log(msg.content)
+		});
+
+	},
+};

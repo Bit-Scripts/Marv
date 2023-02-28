@@ -14,7 +14,7 @@ module.exports = {
                 },
                 responseType: 'json'
             });
-            interaction.reply(`Matrix a été cloné : ${response.data.count} fois\nPlus d'infos ici https://github.com/Bit-Scripts/Matrix`);
+            interaction.reply(`Matrix a été cloné : ${response.data.count} fois.\nPlus d'infos ici github.com/Bit-Scripts/Matrix`);
         } catch (error) {
             console.error(error);
             interaction.reply('Il y a eu une erreur lors de la récupération des informations de clonage de Matrix.');

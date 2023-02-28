@@ -9,7 +9,7 @@ module.exports = {
         .setDescription('Connaître le nombre de téléchargements de Low-Fuel'),	
     async execute(interaction) {
         await gh.getTotalDownloads().then(count => {
-            interaction.reply(`Nombre total de téléchargements de Low-Fuel : ${count}`);
+            interaction.reply(`Nombre total de téléchargements de Low-Fuel : ${count}.\nPlus d'info sur github.com/Bit-Scripts/Low-Fuel`);
         }).catch(error => {
             console.error(error.message);
         });

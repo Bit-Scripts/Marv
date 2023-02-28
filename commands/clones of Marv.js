@@ -14,7 +14,7 @@ module.exports = {
                 },
                 responseType: 'json'
             });
-            interaction.reply(`Marv a été cloné : ${response.data.count} fois\nPlus d'infos ici https://github.com/Bit-Scripts/Marv`);
+            interaction.reply(`Marv a été cloné : ${response.data.count} fois.\nPlus d'infos ici github.com/Bit-Scripts/Marv`);
         } catch (error) {
             console.error(error);
             interaction.reply('Il y a eu une erreur lors de la récupération des informations de clonage de Marv.');

@@ -1,41 +1,35 @@
-const { token, OPENAI_API_KEY, DEEPL_API_KEY, organization } = require('./config.json');
+const { token, OPENAI_API_KEY, DEEPL_API_KEY, organization, WITAIKEY } = require('./config.json');
 const fs = require("fs");
-const path = require('path');
 const { Client, Collection, GatewayIntentBits, ActivityType, Events } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates] });
+const path = require('path');
 const eventsPath = path.join(__dirname, '/events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-const { EndBehaviorType, createAudioPlayer,  createAudioResource, AudioPlayerStatus, joinVoiceChannel, VoiceConnectionStatus } = require('@discordjs/voice');
+const { createAudioResource, createAudioPlayer,  joinVoiceChannel, VoiceConnectionStatus, VoiceConnection } = require('@discordjs/voice');
 const { Configuration, OpenAIApi } = require("openai");
 const deepl = require('deepl-node');
 const translator = new deepl.Translator(DEEPL_API_KEY);
 const commandsPath = path.join(__dirname, '/commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 const util = require('util');
-const speech = require('@google-cloud/speech');
 const textToSpeech = require('@google-cloud/text-to-speech');
-const {Storage} = require('@google-cloud/storage');
-const projectId = "marv-378607";
-
-global.onVocalAction = false;
-async function authenticateImplicitWithAdc() {
-	const storage = new Storage({
-		projectId,
-	});
-	const [buckets] = await storage.getBuckets();
-	console.log('Buckets:');
-
-	for (const bucket of buckets) {
-		console.log(`- ${bucket.name}`);
-	}
-
-	console.log('Listed all storage buckets.');
-}
-
-authenticateImplicitWithAdc();
-
+const { addSpeechEvent } = require("discord-speech-recognition");
 const tts = new textToSpeech.TextToSpeechClient();
-const stt = new speech.SpeechClient();
+addSpeechEvent(client, { lang: 'fr-FR' });
+//addSpeechEvent(client, { key: 'WITAIKEY' });
+let speak = true
+
+Marv_channel = client.channels.cache.find(channel => channel.id === '1077629023577976902')
+
+client.once("ready", () => {
+	console.log(`${client.user.tag} loading to Voice!`);
+	let channel = client.channels.cache.find(channel => channel.id === '1079588443929190420')
+	channel.send('<@1058811530092748871>')
+})
+
+client.once('speech', (msg) => {
+	if (msg.content) console.log(`${client.user.tag} is Ready to Talk!`);
+})
 
 client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => { // Listeing to the voiceStateUpdate event
     if (newVoiceState.channel) { // The member connected to a channel.
@@ -92,15 +86,24 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
+client.on(Events.InteractionCreate, async interaction => {
+	if (!interaction.isChatInputCommand()) return;
+	const interactionMessage = await interaction.fetchReply();
+	//console.log(interactionMessage.content);
+	if (interactionMessage.content !== "Mais, vous savez, moi je ne crois pas qu'il y ait de bonne ou de mauvaise situation. Moi, si je devais résumer ma vie aujourd'hui avec vous, je dirais que c'est d'abord des rencontres, des gens qui m'ont tendu la main, peut-être à un moment où je ne pouvais pas, où j'étais seul chez moi. Et c'est assez curieux de se dire que les hasards, les rencontres forgent une destinée... Parce que quand on a le goût de la chose quand on a le goût de la chose bien faite, le beau geste, parfois on ne trouve pas l'interlocuteur en face, je dirais, le miroir qui vous aide à avancer. Alors ce n'est pas mon cas, comme je le disais là, puisque moi au contraire, j'ai pu ; et je dis merci à la vie, je lui dis merci, je chante la vie, je danse la vie... Je ne suis qu'amour ! Et finalement, quand beaucoup de gens aujourd'hui me disent « Mais comment fais-tu pour avoir cette humanité ? », eh ben je leur réponds très simplement, je leur dis que c'est ce goût de l'amour, ce goût donc qui m'a poussé aujourd'hui à entreprendre une construction mécanique, mais demain, qui sait, peut-être seulement à me mettre au service de la communauté, à faire le don, le don de soi...") {
+		speak = true
+		synthesizeSpeech(interactionMessage.content.replace('/',' slash ').replace('/',' slash ').replace('Low-Fuel','LowFuel').replace('-',' tiret ').replace('-',' tiret '), Marv_channel, speak)
+	} else {
+		PlayMP3('./monologue.mp3')
+	}	
+});
+
 const configuration = new Configuration({
 	organization: organization,
     apiKey:  OPENAI_API_KEY,
 });
 
-
 const openai = new OpenAIApi(configuration);
-
-let msg_bool = true
 
 let prompt =`Tu es Marv qui est un chatbot à la fois un expert en informatique et un compagnon de conversation.\n
 Le bot doit être capable de parler de tout et de rien, tout en ayant une connaissance approfondie des sujets liés à l'informatique.\n
@@ -109,7 +112,8 @@ les architectures de systèmes, les protocoles réseau, etc. en utilisant un lan
 Le bot doit également être capable de maintenir une conversation intéressante et engageante,\n
 en utilisant des techniques de génération de texte avancées telles que l'humour, l'empathie et la personnalisation.\n
 Utilisez les dernières avancées de l'IA pour créer un bot qui peut apprendre de ses interactions avec les utilisateurs et s'adapter à leur style de conversation.\n
-Il respect le MarkDown pour partager du code.\n`;
+Il respect le MarkDown pour partager du code. Marv déteste le comique de répétitions et de se répéter à plusieurs reprise, Marv et capable de tenir une véritable conversation.\n
+Il est bienveillant et respectueux envers tout le monde.\n`;
 
 (async () => {
     const result = await translator.translateText('Hello, world!', null, 'fr');
@@ -120,12 +124,12 @@ const player = createAudioPlayer();
 
 function PlayMP3(resource) {
 	resource = createAudioResource(path.join(__dirname, resource));
-	console.log('lancement de ma lecture')
+	console.log('lancement de la lecture')
 	player.play(resource);
-	global.onVocalAction = false
 }
 
-async function synthesizeSpeech(text) {
+async function synthesizeSpeech(text, Marv_channel, speak) {
+	if (!speak) return
 	// Construct the request
 	const request = {
 		input: {text: text},
@@ -141,64 +145,37 @@ async function synthesizeSpeech(text) {
 	const writeFile = util.promisify(fs.writeFile);
 	await writeFile('output.mp3', response.audioContent, 'binary');
 	console.log('Audio content written to file: output.mp3');
-	PlayMP3('output.mp3');
+	if (Marv_channel !== '1079588443929190420') PlayMP3('output.mp3');
+	speak = false
+	return speak
 }
 
-async function reconizeSpeech(user, audioBuffer) {
-
-	// The audio file's encoding, sample rate in hertz, and BCP-47 language code
-	const audio = {
-		content: audioBuffer.toString('base64'),
-	};
-	const config = {
-		encoding: 'LINEAR16',
-		sampleRateHertz: 48000,
-		languageCode: 'fr-FR',
-	};
-	const request = {
-		audio: audio,
-		config: config,
-	};
-
-	// Detects speech in the audio file
-	const [response] = await stt.recognize(request);
-	const transcription = response.results
-	.map(result => result.alternatives[0].transcript)
-	.join('\n');
-	console.log(`Transcription: ${user} a dit ${transcription}`);
-	global.onVocalAction = false
-}
-
-client.on("messageCreate", async (message) => {
-	adminChannel = client.channels.cache.get('1064208603076108440');
-	if (msg_bool) {
-		console.log('a new message was send');
-		msg_bool = !msg_bool;
-	}
-	if (message.author.bot) return;
-	let message_filtre = message.content.split('<@')
-	let messageFinal = '@' + message.author.username + ' : ' + message_filtre[0];
-	for(let messageUsers of message_filtre ) {
-		if (messageUsers != message_filtre[0]) {
-			let idPeople = messageUsers.split('>')[0]
+async function Marv(msg, speak) {
+	console.log('Marv is speak : ' + speak)
+	if (!speak) return
+	let msg_filtre = msg.content?.split('<@')
+	let msgFinal = '@' + msg.author?.username + ' : ' + msg_filtre[0];
+	for(let msgUsers of msg_filtre ) {
+		if (msgUsers != msg_filtre[0]) {
+			let idPeople = msgUsers.split('>')[0]
 			let thanos = await client.users.fetch(idPeople);
-			messageUsers = '@' + thanos.username + messageUsers.split('>')[1];
-			messageFinal += messageUsers;	
+			msgUsers = '@' + thanos.username + msgUsers.split('>')[1];
+			msgFinal += msgUsers;	
 		}
 	}
-	console.log(messageFinal);
+	console.log(msgFinal);
 	adminChannel.send('-------------------------')
-	adminChannel.send(messageFinal);
-	if (typeof messageFinal === 'string' ? messageFinal.includes('@Marv') : false) {
-		let message_Marv = messageFinal.replace('@Marv ', '').replace(' @Marv', '').replace('@Marv', '').replace('You', '');
-		if (message_Marv === '') return;
+	adminChannel.send(msgFinal);
+	if (typeof msgFinal === 'string' ? msgFinal.includes('@Marv') : false) {
+		let msg_Marv = msgFinal.replace('@Marv ', '').replace(' @Marv', '').replace('@Marv', '').replace('You', '');
+		if (msg_Marv === '') return;
 
-		let message_MarvIntermed = message_Marv;
-		if (message_Marv.includes('fr_FR')) {
-			message_Marv = await translator.translateText(`${message_Marv.replace('fr_FR ', '').replace(' fr_FR', '').replace('fr_FR', '')}`, null, 'en-US');
-			message_Marv = message_Marv.text;
+		let msg_MarvIntermed = msg_Marv;
+		if (msg_Marv.includes('fr_FR')) {
+			msg_Marv = await translator.translateText(`${msg_Marv.replace('fr_FR ', '').replace(' fr_FR', '').replace('fr_FR', '')}`, null, 'en-US');
+			msg_Marv = msg_Marv.text;
 		}
-		prompt += `You: ${message_Marv}\n`;
+		prompt += `You: ${msg_Marv}\n`;
 		const gptResponse = await openai.createCompletion({
 			model: "text-davinci-003",
 			prompt: prompt,
@@ -209,141 +186,58 @@ client.on("messageCreate", async (message) => {
 			frequency_penalty: 0.5,
 		});
 		let laReponse = gptResponse.data.choices[0].text;
-		message_Marv = message_MarvIntermed;
-		if (message_Marv.includes('fr_FR')) {
+		msg_Marv = msg_MarvIntermed;
+		if (msg_Marv.includes('fr_FR')) {
 			laReponse = await translator.translateText(`${laReponse}`, null, 'fr');
 			laReponse = laReponse.text
 		}
 		console.log('@' + laReponse);
 
-		let messagesArray = [];
+		let msgsArray = [];
 		
 		if (laReponse.length >= 2000) {
 			cutReponse = laReponse.replace('Marv :', '').replace('Marv:', '').split(".").split(",").split("\n");
-			messagesArray.push(cutReponse);
+			msgsArray.push(cutReponse);
 		}
-		if (messagesArray.length) {
-			messagesArray.forEach( message => { message.channel.send(message) } )
+		if (msgsArray.length) {
+			msgsArray.forEach( msg => { msg.channel.send(msg) } )
 		} else {
-			message.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
+			msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
 		}
-		if (!global.onVocalAction){
-			global.onVocalAction = true
-			synthesizeSpeech(laReponse.replace('Marv :', '').replace('Marv:', ''));
-		}
+
+		synthesizeSpeech(laReponse.replace('Marv :', '').replace('Marv:', '').replace('Marc', 'Marv'), Marv_channel, speak);
+
 		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
-	}
+	}	
+}
+
+client.on("speech", (msg) => {
+	// If bot didn't recognize speech, content will be empty
+	if (!msg.content || !speak) return;
+	marvChannel = client.channels.cache.get('1079588443929190420');
+	marvChannel.send('<@1058811530092748871> ' + msg.author.username + ' ' + msg.content?.replace('Marc', 'Marv'))
+	console.log(msg.author.username + ' ' + msg.content?.replace('Marc', 'Marv'))
+	//Marv(msg)
+	console.log(`${client.user.username} loading to Voice!`);
 });
 
-client.on('ready', () => {
-
-	const connection = joinVoiceChannel({
-		channelId: '1039788045441978371',
-		guildId: '1039788044691181608',
-		adapterCreator: client.guilds.cache.get('1039788044691181608').voiceAdapterCreator,
-		selfDeaf: false,
-		selfMute: false,
-		group: client.user.id,
-	});
-
-	console.log("Listener Is Joining Voice And Listening...");
-
-	const receiver = connection.receiver;
-
-	connection.on(VoiceConnectionStatus.Ready, () => {
-		client.voice.selfDeaf = false
-		console.log('The connection has entered the Ready state - ready to listen or to play audio!');
-		connection.subscribe(player);	
-	});
-
-	async function probeAndCreateResource(readableStream) {
-		const { stream, type } = await demuxProbe(readableStream);
-		return createAudioResource(stream, { inputType: type });
+client.on("messageCreate", async (msg) => {
+	adminChannel = client.channels.cache.get('1064208603076108440');
+	const voiceChannel = client.channels.cache.get('1039788045441978371');
+	if (!client.voice.channel && voiceChannel) {
+		const connection = joinVoiceChannel({
+			channelId: voiceChannel.id,
+			guildId: voiceChannel.guild.id,
+			adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+			selfDeaf: false,
+	  	});
+		connection.subscribe(player);
+	  	console.log("Listener Is Joining Voice And Listening...");
 	}
-	
-	receiver.speaking.on('start', async (UserId) => {
-		if (!global.onVocalAction){
-			global.onVocalAction = true
 
-			let UserSpeaker = client.users.cache.get(UserId).username;
-			console.log(`I'm now listening to ${UserSpeaker}`);
-			
-			/*const opusStream = receiver.subscribe(client.user.id, {
-				end: {
-					behavior: EndBehaviorType.AfterSilence,
-					duration: 1000,
-				},
-			});
+	speak = true
+	if (msg.content !== undefined && msg.content.includes('<@1058811530092748871>') && msg.content !== '<@1058811530092748871>' ) Marv(msg, speak)
+});
 
-			let opusBuffer = Buffer.alloc(0);
-
-			opusStream.on('readable', () => {
-			  	let chunk;
-			  	while (null !== (chunk = opusStream.read())) {
-					opusBuffer = Buffer.concat([opusBuffer, chunk]);
-				}
-			});
-			
-			const mp3Buffer = opusStream.on('end', () => {
-				// Créer un décodeur Opus
-				const opusDecoder = new OpusScript(48000, 2, OpusScript.Application.AUDIO);
-			
-				// Décoder le buffer Opus en PCM brut
-				const pcmBuffer = opusDecoder.decode(opusBuffer);
-			
-				// Créer un flux de lecture à partir du PCM brut
-				const pcmStream = new Readable();
-				pcmStream.push(pcmBuffer);
-				pcmStream.push(null);
-			
-				// Créer un encodeur MP3
-				const mp3Encoder = new Lame.Lame({
-					output: "buffer",
-					channels: 2,
-					bitDepth: 16,
-					sampleRate: 48000,
-					bitRate: 128,
-					outSampleRate: 48000,
-					mode: Lame.STEREO,
-					//floatValue: false // Ajout de l'option floatValue: false pour utiliser des données PCM en entier
-				});
-
-				// Pipe le flux PCM brut vers l'encodeur MP3
-				pcmStream.pipe(mp3Encoder);
-
-				// Attendre la fin de l'encodage MP3
-				return new Promise((resolve, reject) => {
-					mp3Encoder.encode()
-					.then(async () => {
-						// Encodage terminé
-						mp3Buffer = mp3Encoder.outputBuffer;
-						resolve(mp3Buffer);
-						
-					})
-					.catch((error) => {
-						// Une erreur s'est produite
-						console.error(error);
-						reject(error);
-					});
-				});
-			});
-
-			await reconizeSpeech(UserSpeaker, mp3Buffer);*/
-			global.onVocalAction = false
-		}
-	});
-
-	receiver.speaking.on('stop', (UserId) => {
-		let UserSpeaker = client.users.cache.get(UserId).username;
-		console.log(`I'm no longer listening to ${UserSpeaker}`);
-	});
-	
-	player.on(AudioPlayerStatus.Idle, () => {
-		console.log('Audio player has become idle - no more audio to play!');
-	});
-	
-})
-
-// Log in to Discord with your client's token
 client.login(token);
