@@ -1,8 +1,9 @@
-const { token, OPENAI_API_KEY, DEEPL_API_KEY, organization, WITAIKEY } = require('./config.json');
+const { token, OPENAI_API_KEY, DEEPL_API_KEY, GCkey } = require('./config.json');
 const fs = require("fs");
 const { Client, Collection, GatewayIntentBits, ActivityType, Events } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates] });
 const path = require('path');
+const { exists } =require('fs');
 const eventsPath = path.join(__dirname, '/events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 const { createAudioResource, createAudioPlayer,  joinVoiceChannel, VoiceConnectionStatus, VoiceConnection } = require('@discordjs/voice');
@@ -13,11 +14,19 @@ const commandsPath = path.join(__dirname, '/commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 const util = require('util');
 const textToSpeech = require('@google-cloud/text-to-speech');
-const { addSpeechEvent } = require("discord-speech-recognition");
+const { addSpeechEvent, resolveSpeechWithGoogleSpeechV2 } = require("discord-speech-recognition");
 const tts = new textToSpeech.TextToSpeechClient();
-addSpeechEvent(client, { lang: 'fr-FR' });
+let botisConnected = false
+let speak = false
+addSpeechEvent(client, { 
+	key: GCkey,
+	lang: 'fr-FR', 
+	profanityFilter:false,
+	speechRecognition: resolveSpeechWithGoogleSpeechV2, 
+	ignoreBots: true,
+});
+
 //addSpeechEvent(client, { key: 'WITAIKEY' });
-let speak = true
 
 Marv_channel = client.channels.cache.find(channel => channel.id === '1077629023577976902')
 
@@ -27,13 +36,15 @@ client.once("ready", () => {
 	channel.send('<@1058811530092748871>')
 })
 
-client.once('speech', (msg) => {
+/*client.once('speech', (msg) => {
 	if (msg.content) console.log(`${client.user.tag} is Ready to Talk!`);
-})
+})*/
 
 client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => { // Listeing to the voiceStateUpdate event
     if (newVoiceState.channel) { // The member connected to a channel.
-        console.log(`${newVoiceState.member.user.tag} connected to ${newVoiceState.channel.name}.`);
+		speak = false
+		addSpeechEvent.shouldProcessSpeech = !speak
+		return speak
 	} else if (oldVoiceState.channel) { // The member disconnected from a channel.
         console.log(`${oldVoiceState.member.user.tag} disconnected from ${oldVoiceState.channel.name}.`)
     };
@@ -94,12 +105,11 @@ client.on(Events.InteractionCreate, async interaction => {
 		speak = true
 		synthesizeSpeech(interactionMessage.content.replace('/',' slash ').replace('/',' slash ').replace('Low-Fuel','LowFuel').replace('-',' tiret ').replace('-',' tiret '), Marv_channel, speak)
 	} else {
-		PlayMP3('./monologue.mp3')
+		PlayMP3('./monologue.mp3', speak)
 	}
 });
 
 const configuration = new Configuration({
-	organization: organization,
 	apiKey:  OPENAI_API_KEY,
 });
 
@@ -119,16 +129,37 @@ Alors, pose-moi une question et voyons ce que nous pouvons découvrir ensemble !
 
 const player = createAudioPlayer();
 
-function PlayMP3(resource) {
-	resource = createAudioResource(path.join(__dirname, resource));
+
+
+function PlayMP3(resource, speak) {
+	resource = createAudioResource(resource);
 	console.log('lancement de la lecture')
-	player.play(resource);
-	speak = false
-	return speak
+	player.play(resource)
 }
+
+player.addListener("stateChange", (oldOne, newOne) => {
+	if (newOne.status === "idle") {
+		exists('/tmp/', function (doesExist) {  
+			if (doesExist) {  
+				console.log('le fichier existe');  
+				fs.unlink("output.mp3", (err) => {
+					if (err) throw err;
+					console.log("File deleted!");
+				});
+			} else {  
+				console.log('le fichier n\'existe pas');  
+			}  
+		});
+		speak = false
+		addSpeechEvent.shouldProcessSpeech = !speak
+		return speak
+	}
+});
 
 async function synthesizeSpeech(text, Marv_channel, speak) {
 	if (!speak) return
+
+	text = text.replace('\n', '. ')
 	// Construct the request
 	const request = {
 		input: {text: text},
@@ -142,9 +173,11 @@ async function synthesizeSpeech(text, Marv_channel, speak) {
 	const [response] = await tts.synthesizeSpeech(request);
 	// Write the binary audio content to a local file
 	const writeFile = util.promisify(fs.writeFile);
-	await writeFile('output.mp3', response.audioContent, 'binary');
-	console.log('Audio content written to file: output.mp3');
-	if (Marv_channel !== '1079588443929190420') PlayMP3('output.mp3');
+	await writeFile('output.mp3', response.audioContent, 'binary')
+	.then(_ => { 
+		console.log('Audio content written to file: output.mp3'); 
+		if (Marv_channel !== '1079588443929190420') PlayMP3('output.mp3', speak);		
+	});
 }
 
 async function Marv(msg, speak) {
@@ -173,41 +206,30 @@ async function Marv(msg, speak) {
 			msg_Marv = msg_Marv.text;
 		}
 		prompt += `You: ${msg_Marv}\n`;
-		/*const gptResponse = await openai.createCompletion({
-			model: "text-davinci-003",
-			prompt: prompt,
-			max_tokens: 600,
-			temperature: 0.5,
-			top_p: 0.5,
-			presence_penalty: 0,
-			frequency_penalty: 0.5,
-		});*/
+
+		let laReponse = ''
+
 		const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
 			messages: [{role: "user", content: prompt}]
 		});
-		let laReponse = gptResponse.data.choices[0].message.content;
+
+		laReponse = gptResponse.data.choices[0].message.content;
 		msg_Marv = msg_MarvIntermed;
 		if (msg_Marv.includes('fr_FR')) {
 			laReponse = await translator.translateText(`${laReponse}`, null, 'fr');
 			laReponse = laReponse.text
 		}
-		console.log('@' + laReponse);
 
-		/*let msgsArray = [];
+		console.log('@' + laReponse);
+		
+		await msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
 
 		if (laReponse.length >= 2000) {
-			cutReponse = laReponse.replace('Marv :', '').replace('Marv:', '').split(".").split(",").split("\n");
-			msgsArray.push(cutReponse);
-		}
-		if (msgsArray.length) {
-			msgsArray.forEach( msg => { msg.channel.send(msg) } )
+			await synthesizeSpeech('Votre message étant particulièrement long, je vous invite a allez voir dans le salon dédié', Marv_channel, speak);
 		} else {
-			msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
-		}*/
-
-		synthesizeSpeech(laReponse?.replace('Marv :', '').replace('Marv:', '').replace('Marc', 'Marv'), Marv_channel, speak);
-
+			await synthesizeSpeech(laReponse.replace('Marv :', '').replace('Marv:', '').replace('Marc', 'Marv'), Marv_channel, speak);
+		}
 		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
 	}
@@ -215,12 +237,8 @@ async function Marv(msg, speak) {
 message = ''
 client.on("speech", (msg) => {
 	// If bot didn't recognize speech, content will be empty
-	if (!msg.content || (msg.content === '<@1058811530092748871>')) return;
-	if (speak) {
-		message = message + msg.content + '. '
-	} else if (message === ''){
-		message = msg.content
-	}
+	if (!msg.content) return;
+	message = msg.content
 	marvChannel = client.channels.cache.get('1079588443929190420');
 	marvChannel.send('<@1058811530092748871> ' + msg.author.username + ' ' + message.replace('Marc', 'Marv'))
 	console.log(msg.author.username + ' ' + message?.replace('Marc', 'Marv'))
@@ -230,10 +248,14 @@ client.on("speech", (msg) => {
 	return message
 });
 
+client.on('voiceStateUpdate', (oldState, newState) => {
+    botisConnected = oldState.member.user.bot
+})
+
 client.on("messageCreate", async (msg) => {
 	adminChannel = client.channels.cache.get('1064208603076108440');
 	const voiceChannel = client.channels.cache.get('1039788045441978371');
-	if (!client.voice.channel && voiceChannel) {
+	if (!botisConnected && voiceChannel) {
 		const connection = joinVoiceChannel({
 			channelId: voiceChannel.id,
 			guildId: voiceChannel.guild.id,
@@ -242,9 +264,11 @@ client.on("messageCreate", async (msg) => {
 	  	});
 		connection.subscribe(player);
 	  	console.log("Listener Is Joining Voice And Listening...");
+		botisConnected = true
 	}
 
 	speak = true
+	addSpeechEvent.shouldProcessSpeech = !speak ;
 	if (msg.content !== undefined && msg.content.includes('<@1058811530092748871>') && msg.content !== '<@1058811530092748871>' ) Marv(msg, speak)
 });
 
