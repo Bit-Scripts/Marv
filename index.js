@@ -100,20 +100,17 @@ client.on(Events.InteractionCreate, async interaction => {
 
 const configuration = new Configuration({
 	organization: organization,
-    apiKey:  OPENAI_API_KEY,
+	apiKey:  OPENAI_API_KEY,
 });
 
 const openai = new OpenAIApi(configuration);
 
-let prompt =`Tu es Marv qui est un chatbot à la fois un expert en informatique et un compagnon de conversation.\n
-Le bot doit être capable de parler de tout et de rien, tout en ayant une connaissance approfondie des sujets liés à l'informatique.\n
-Il doit être capable de répondre à des questions techniques sur les langages de programmation,\n
-les architectures de systèmes, les protocoles réseau, etc. en utilisant un langage simple et accessible.\n
-Le bot doit également être capable de maintenir une conversation intéressante et engageante,\n
-en utilisant des techniques de génération de texte avancées telles que l'humour, l'empathie et la personnalisation.\n
-Utilisez les dernières avancées de l'IA pour créer un bot qui peut apprendre de ses interactions avec les utilisateurs et s'adapter à leur style de conversation.\n
-Il respect le MarkDown pour partager du code. Marv déteste le comique de répétitions et de se répéter à plusieurs reprise, Marv et capable de tenir une véritable conversation.\n
-Il est bienveillant et respectueux envers tout le monde.\n`;
+let prompt =`Salut, je suis Marv, un chatbot conversationnel et expert en informatique !
+Je suis là pour t'aider avec tous les aspects de l'informatique, et je suis toujours prêt à répondre à tes questions.
+Je suis un chatbot sympathique et ouvert d'esprit, donc n'hésite pas à me parler de tout et n'importe quoi.
+Que tu aies des questions sur la programmation, les ordinateurs, les logiciels, les réseaux, ou même si tu cherches simplement des conseils sur l'informatique en général, je suis là pour toi.
+Ensemble, nous pouvons explorer le monde de l'informatique et résoudre les problèmes que tu rencontres.
+Alors, pose-moi une question et voyons ce que nous pouvons découvrir ensemble !`;
 
 (async () => {
     const result = await translator.translateText('Hello, world!', null, 'fr');
@@ -176,7 +173,7 @@ async function Marv(msg, speak) {
 			msg_Marv = msg_Marv.text;
 		}
 		prompt += `You: ${msg_Marv}\n`;
-		const gptResponse = await openai.createCompletion({
+		/*const gptResponse = await openai.createCompletion({
 			model: "text-davinci-003",
 			prompt: prompt,
 			max_tokens: 600,
@@ -184,8 +181,12 @@ async function Marv(msg, speak) {
 			top_p: 0.5,
 			presence_penalty: 0,
 			frequency_penalty: 0.5,
+		});*/
+		const gptResponse = await openai.createChatCompletion({
+			model: "gpt-3.5-turbo",
+			messages: [{role: "user", content: prompt}]
 		});
-		let laReponse = gptResponse.data.choices[0].text;
+		let laReponse = gptResponse.data.choices[0].message.content;
 		msg_Marv = msg_MarvIntermed;
 		if (msg_Marv.includes('fr_FR')) {
 			laReponse = await translator.translateText(`${laReponse}`, null, 'fr');
@@ -193,7 +194,7 @@ async function Marv(msg, speak) {
 		}
 		console.log('@' + laReponse);
 
-		let msgsArray = [];
+		/*let msgsArray = [];
 
 		if (laReponse.length >= 2000) {
 			cutReponse = laReponse.replace('Marv :', '').replace('Marv:', '').split(".").split(",").split("\n");
@@ -203,9 +204,9 @@ async function Marv(msg, speak) {
 			msgsArray.forEach( msg => { msg.channel.send(msg) } )
 		} else {
 			msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
-		}
+		}*/
 
-		synthesizeSpeech(laReponse.replace('Marv :', '').replace('Marv:', '').replace('Marc', 'Marv'), Marv_channel, speak);
+		synthesizeSpeech(laReponse?.replace('Marv :', '').replace('Marv:', '').replace('Marc', 'Marv'), Marv_channel, speak);
 
 		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
@@ -214,7 +215,7 @@ async function Marv(msg, speak) {
 message = ''
 client.on("speech", (msg) => {
 	// If bot didn't recognize speech, content will be empty
-	if (!msg.content) return;
+	if (!msg.content || (msg.content === '<@1058811530092748871>')) return;
 	if (speak) {
 		message = message + msg.content + '. '
 	} else if (message === ''){
