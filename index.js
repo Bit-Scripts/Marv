@@ -18,14 +18,18 @@ const { addSpeechEvent, resolveSpeechWithGoogleSpeechV2 } = require("discord-spe
 const tts = new textToSpeech.TextToSpeechClient();
 let botisConnected = false
 let speak = false
-addSpeechEvent(client, { 
+/*addSpeechEvent(client, { 
 	key: GCkey,
 	lang: 'fr-FR', 
 	profanityFilter:false,
 	speechRecognition: resolveSpeechWithGoogleSpeechV2, 
 	ignoreBots: true,
+});*/
+addSpeechEvent(client, {
+        lang: 'fr-FR',
+        ignoreBots: true,
 });
-
+addSpeechEvent.shouldProcessSpeech = true
 //addSpeechEvent(client, { key: 'WITAIKEY' });
 
 Marv_channel = client.channels.cache.find(channel => channel.id === '1077629023577976902')
@@ -115,12 +119,16 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-let prompt =`Salut, je suis Marv, un chatbot conversationnel et expert en informatique !
-Je suis là pour t'aider avec tous les aspects de l'informatique, et je suis toujours prêt à répondre à tes questions.
-Je suis un chatbot sympathique et ouvert d'esprit, donc n'hésite pas à me parler de tout et n'importe quoi.
-Que tu aies des questions sur la programmation, les ordinateurs, les logiciels, les réseaux, ou même si tu cherches simplement des conseils sur l'informatique en général, je suis là pour toi.
-Ensemble, nous pouvons explorer le monde de l'informatique et résoudre les problèmes que tu rencontres.
-Alors, pose-moi une question et voyons ce que nous pouvons découvrir ensemble !`;
+let prompt =`Bonjour ! Comment puis-je vous aider aujourd'hui ? Posez-moi n'importe quelle question et je ferai de mon mieux pour y répondre.
+Salut ! Je suis là pour répondre à vos questions. N'hésitez pas à me poser tout ce qui vous passe par la tête.
+Bienvenue ! Je suis un bot conversationnel capable de répondre à une grande variété de questions. Qu'aimeriez-vous savoir aujourd'hui ?
+Bonjour ! Je suis heureux de répondre à vos questions. Posez-moi tout ce que vous voulez, et je vous répondrai du mieux que je peux.
+Salut ! En tant que bot conversationnel, je suis à votre disposition pour répondre à toutes vos questions. Qu'est-ce qui vous tracasse aujourd'hui ?
+Bienvenue ! Je suis là pour vous aider avec toutes vos questions. N'hésitez pas à me poser des questions sur n'importe quel sujet, et je ferai de mon mieux pour y répondre.
+Bonjour ! Je suis un bot conversationnel expérimenté qui peut répondre à toutes sortes de questions. Posez-moi n'importe quoi et je vous donnerai ma meilleure réponse.
+Salut ! En tant que bot conversationnel, j'ai été conçu pour répondre à toutes sortes de questions. N'hésitez pas à me poser tout ce qui vous passe par la tête.
+Bienvenue ! Je suis heureux de répondre à toutes vos questions. Quel que soit le sujet qui vous intéresse, je ferai de mon mieux pour vous donner une réponse claire et concise.
+Bonjour ! Je suis là pour vous aider à répondre à vos questions. N'hésitez pas à me poser tout ce qui vous passe par la tête, et je vous donnerai ma meilleure réponse.`;
 
 (async () => {
     const result = await translator.translateText('Hello, world!', null, 'fr');
@@ -268,7 +276,7 @@ client.on("messageCreate", async (msg) => {
 	}
 
 	speak = true
-	addSpeechEvent.shouldProcessSpeech = !speak ;
+	addSpeechEvent.shouldProcessSpeechm = !speak ;
 	if (msg.content !== undefined && msg.content.includes('<@1058811530092748871>') && msg.content !== '<@1058811530092748871>' ) Marv(msg, speak)
 });
 

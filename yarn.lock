@@ -111,9 +111,9 @@
   integrity sha512-z1CjRjtQyBOYL+5Qr9DdYIfrdLBe746jRTYfaYU6MeXkqp7UfYs/jX16lFFVzZ7PGEJvqZNqYUEtb1mvDww4pA==
 
 "@google-cloud/storage@^6.9.3":
-  version "6.9.3"
-  resolved "https://registry.yarnpkg.com/@google-cloud/storage/-/storage-6.9.3.tgz#43fa4c9e30785313f68d01e6fde9bdba6d10a695"
-  integrity sha512-ucbHoDvjXlcR/DrJNQlCFnQSaO7pXHTPGs3Gt2TQtPQ+b7Y6DR0ztIt/CEeH+O03I41g9e+T2N1SOOVq5UyaKQ==
+  version "6.9.4"
+  resolved "https://registry.yarnpkg.com/@google-cloud/storage/-/storage-6.9.4.tgz#23f6b8b3335e517e0ab3b9c641e64ceac674887e"
+  integrity sha512-5Li+0xRJ8wgc+vlf7Tgew8COKEJgRzRmC5ozdSYaBj7BK+X39aPPBP6ROsDTiCZ0MpAg7dxIc+HhKiCvQDplXQ==
   dependencies:
     "@google-cloud/paginator" "^3.0.7"
     "@google-cloud/projectify" "^3.0.0"
@@ -160,9 +160,9 @@
     yargs "^16.2.0"
 
 "@jsdoc/salty@^0.2.1":
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/@jsdoc/salty/-/salty-0.2.3.tgz#aab70c8756c1b98598bbc30867d3aa7a31b5c7d4"
-  integrity sha512-bbtCxCkxcnWhi50I+4Lj6mdz9w3pOXOgEQrID8TCZ/DF51fW7M9GCQW2y45SpBDdHd1Eirm1X/Cf6CkAAe8HPg==
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/@jsdoc/salty/-/salty-0.2.4.tgz#049d92e1814b7fdffde2564ecd5746fb46278d8c"
+  integrity sha512-HRBmslXHM6kpZOfGf0o41NUlGYGER0NoUBcT2Sik4rxzAN7f7+si7ad57SFSFpftvaMVnUaY7YlJuv3v5G80ZA==
   dependencies:
     lodash "^4.17.21"
 
@@ -634,9 +634,9 @@
   integrity sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==
 
 "@types/node@*", "@types/node@>=12.0", "@types/node@>=12.12.47", "@types/node@>=13.7.0", "@types/node@^18.11.18":
-  version "18.14.2"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.14.2.tgz#c076ed1d7b6095078ad3cf21dfeea951842778b1"
-  integrity sha512-1uEQxww3DaghA0RxqHx0O0ppVlo43pJhepY51OxuQIKHpjbnYLA7vcdwioNPzIqmC2u3I/dmylcqjlh0e7AyUA==
+  version "18.14.5"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.14.5.tgz#4a13a6445862159303fc38586598a9396fc408b3"
+  integrity sha512-CRT4tMK/DHYhw1fcCEBwME9CSaZNclxfzVMe7GsO6ULSwsttbj70wSiX6rZdIjGblu93sTJxLdhNIT85KKI7Qw==
 
 "@types/node@^10.0.3":
   version "10.17.60"
@@ -4098,9 +4098,9 @@ supports-preserve-symlinks-flag@^1.0.0:
   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
 
 systeminformation@^5.7:
-  version "5.17.11"
-  resolved "https://registry.yarnpkg.com/systeminformation/-/systeminformation-5.17.11.tgz#4c58095692499d503ca2af2606e140369feb57e0"
-  integrity sha512-JaS/ggJDzMC1oOhCcs2b2wTQlmrnLCHUNHsefbqOcZH/uLYAxaweI5Nyx1tViQqYIxLOsgr6Rl0FDny8MtRj/g==
+  version "5.17.12"
+  resolved "https://registry.yarnpkg.com/systeminformation/-/systeminformation-5.17.12.tgz#5b3e1bfcd5c2c5b459f1a88e61fed27cf9668ba8"
+  integrity sha512-I3pfMW2vue53u+X08BNxaJieaHkRoMMKjWetY9lbYJeWFaeWPO6P4FkNc4XOCX8F9vbQ0HqQ25RJoz3U/B7liw==
 
 tar-stream@^2.2.0:
   version "2.2.0"
