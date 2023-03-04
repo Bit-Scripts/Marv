@@ -183,8 +183,8 @@ player.addListener("stateChange", (oldOne, newOne) => {
 	console.log(newOne.status)
 	if (newOne.status === "idle") {
 		console.log('Fichier entièrement lu');
-		channel = client.channels.cache.find(channel => channel.id === '1079588443929190420')
-               	channel.send('<@1058811530092748871>')
+		//channel = client.channels.cache.find(channel => channel.id === '1079588443929190420')
+               	//channel.send('<@1058811530092748871>')
 		exists('output.mp3', function (doesExist) {
 			if (doesExist) {
 				console.log('le fichier existe');
