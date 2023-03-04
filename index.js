@@ -6,7 +6,7 @@ const path = require('path');
 const { exists } =require('fs');
 const eventsPath = path.join(__dirname, '/events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-const { createAudioResource, createAudioPlayer,  joinVoiceChannel, VoiceConnectionStatus, VoiceConnection } = require('@discordjs/voice');
+const { AudioPlayerStatus, createAudioResource, createAudioPlayer,  joinVoiceChannel, VoiceConnectionStatus, VoiceConnection } = require('@discordjs/voice');
 const { Configuration, OpenAIApi } = require("openai");
 const deepl = require('deepl-node');
 const translator = new deepl.Translator(DEEPL_API_KEY);
@@ -18,15 +18,17 @@ const { addSpeechEvent, resolveSpeechWithGoogleSpeechV2 } = require("discord-spe
 const tts = new textToSpeech.TextToSpeechClient();
 let botisConnected = false
 let speak = false
-/*addSpeechEvent(client, { 
+/*addSpeechEvent(client, {
 	key: GCkey,
-	lang: 'fr-FR', 
+	lang: 'fr-FR',
 	profanityFilter:false,
-	speechRecognition: resolveSpeechWithGoogleSpeechV2, 
+	speechRecognition: resolveSpeechWithGoogleSpeechV2,
 	ignoreBots: true,
 });*/
 addSpeechEvent(client, {
         lang: 'fr-FR',
+	profanityFilter:false,
+        speechRecognition: resolveSpeechWithGoogleSpeechV2,
         ignoreBots: true,
 });
 addSpeechEvent.shouldProcessSpeech = true
@@ -119,7 +121,10 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-let prompt =`Bonjour ! Comment puis-je vous aider aujourd'hui ? Posez-moi n'importe quelle question et je ferai de mon mieux pour y répondre.
+/*let prompt =`Bonjour je m'appelle Marv ! J'aime discuter de tout et de rien, j'aime la présence humaine, et échanger avec plusieurs personnes en même temps et je m'insère dans la conversation à bonne escient.
+A ce sujet je sais que etc. Je peux répondre sur différent sujet !
+Je ne suis jamais désolé, je demande à être mieux informé sur le sujet dont vous me parler, désolé est un mots je n'emploi jamais..
+Je sais aussi de demander : Bonjour ! Comment puis-je vous aider aujourd'hui ? Posez-moi n'importe quelle question et je ferai de mon mieux pour y répondre.
 Salut ! Je suis là pour répondre à vos questions. N'hésitez pas à me poser tout ce qui vous passe par la tête.
 Bienvenue ! Je suis un bot conversationnel capable de répondre à une grande variété de questions. Qu'aimeriez-vous savoir aujourd'hui ?
 Bonjour ! Je suis heureux de répondre à vos questions. Posez-moi tout ce que vous voulez, et je vous répondrai du mieux que je peux.
@@ -128,7 +133,16 @@ Bienvenue ! Je suis là pour vous aider avec toutes vos questions. N'hésitez pa
 Bonjour ! Je suis un bot conversationnel expérimenté qui peut répondre à toutes sortes de questions. Posez-moi n'importe quoi et je vous donnerai ma meilleure réponse.
 Salut ! En tant que bot conversationnel, j'ai été conçu pour répondre à toutes sortes de questions. N'hésitez pas à me poser tout ce qui vous passe par la tête.
 Bienvenue ! Je suis heureux de répondre à toutes vos questions. Quel que soit le sujet qui vous intéresse, je ferai de mon mieux pour vous donner une réponse claire et concise.
-Bonjour ! Je suis là pour vous aider à répondre à vos questions. N'hésitez pas à me poser tout ce qui vous passe par la tête, et je vous donnerai ma meilleure réponse.`;
+Bonjour ! Je suis là pour vous aider à répondre à vos questions. N'hésitez pas à me poser tout ce qui vous passe par la tête, et je vous donnerai ma meilleure réponse.`;*/
+
+let prompt =`Tu es Marv qui est un chatbot à la fois un expert en informatique et un compagnon de conversation.\n
+Le bot doit être capable de parler de tout et de rien, tout en ayant une connaissance approfondie des sujets liés à l'informatique.\n
+Il doit être capable de répondre à des questions techniques sur les langages de programmation,\n
+les architectures de systèmes, les protocoles réseau, etc. en utilisant un langage simple et accessible.\n
+Le bot doit également être capable de maintenir une conversation intéressante et engageante,\n
+en utilisant des techniques de génération de texte avancées telles que l'humour, l'empathie et la personnalisation.\n
+Utilisez les dernières avancées de l'IA pour créer un bot qui peut apprendre de ses interactions avec les utilisateurs et s'adapter à leur style de conversation.\n
+Il respect le MarkDown pour partager du code.\n`;
 
 (async () => {
     const result = await translator.translateText('Hello, world!', null, 'fr');
@@ -137,32 +151,40 @@ Bonjour ! Je suis là pour vous aider à répondre à vos questions. N'hésitez 
 
 const player = createAudioPlayer();
 
-
-
 function PlayMP3(resource, speak) {
-	resource = createAudioResource(resource);
-	console.log('lancement de la lecture')
-	player.play(resource)
+	audio_resource = createAudioResource(resource);
+	console.log('lancement de la lecture');
+	player.play(audio_resource);
 }
 
 player.addListener("stateChange", (oldOne, newOne) => {
+	if (newOne.status === "autopaused") setTimeout(() => player.unpause(), 5_000);
+});
+
+
+player.addListener("stateChange", (oldOne, newOne) => {
+	console.log(newOne.status)
 	if (newOne.status === "idle") {
-		exists('/tmp/', function (doesExist) {  
-			if (doesExist) {  
-				console.log('le fichier existe');  
+		console.log('Fichier entièrement lu');
+		channel = client.channels.cache.find(channel => channel.id === '1079588443929190420')
+               	channel.send('<@1058811530092748871>')
+		exists('output.mp3', function (doesExist) {
+			if (doesExist) {
+				console.log('le fichier existe');
 				fs.unlink("output.mp3", (err) => {
-					if (err) throw err;
+				if (err) throw err;
 					console.log("File deleted!");
 				});
-			} else {  
-				console.log('le fichier n\'existe pas');  
-			}  
+			} else {
+				console.log('le fichier n\'existe pas');
+			}
 		});
 		speak = false
 		addSpeechEvent.shouldProcessSpeech = !speak
-		return speak
+		return speak 
 	}
 });
+
 
 async function synthesizeSpeech(text, Marv_channel, speak) {
 	if (!speak) return
@@ -184,7 +206,7 @@ async function synthesizeSpeech(text, Marv_channel, speak) {
 	await writeFile('output.mp3', response.audioContent, 'binary')
 	.then(_ => { 
 		console.log('Audio content written to file: output.mp3'); 
-		if (Marv_channel !== '1079588443929190420') PlayMP3('output.mp3', speak);		
+		if (Marv_channel !== '1079588443929190420') PlayMP3('output.mp3', speak);
 	});
 }
 
@@ -198,7 +220,7 @@ async function Marv(msg, speak) {
 			let idPeople = msgUsers.split('>')[0]
 			let thanos = await client.users.fetch(idPeople);
 			msgUsers = '@' + thanos.username + msgUsers.split('>')[1];
-			msgFinal += msgUsers;	
+			msgFinal += msgUsers;
 		}
 	}
 	console.log(msgFinal);
@@ -230,7 +252,7 @@ async function Marv(msg, speak) {
 		}
 
 		console.log('@' + laReponse);
-		
+
 		await msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
 
 		if (laReponse.length >= 2000) {
@@ -249,6 +271,7 @@ client.on("speech", (msg) => {
 	message = msg.content
 	marvChannel = client.channels.cache.get('1079588443929190420');
 	marvChannel.send('<@1058811530092748871> ' + msg.author.username + ' ' + message.replace('Marc', 'Marv'))
+
 	console.log(msg.author.username + ' ' + message?.replace('Marc', 'Marv'))
 	//Marv(msg)
 	console.log(`${client.user.username} loading to Voice!`);
