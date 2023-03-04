@@ -1,4 +1,4 @@
-const { token, OPENAI_API_KEY, DEEPL_API_KEY, GCkey } = require('./config.json');
+const { token, OPENAI_API_KEY, DEEPL_API_KEY, GCkey, organization } = require('./config.json');
 const fs = require("fs");
 const { Client, Collection, GatewayIntentBits, ActivityType, Events } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates] });
@@ -116,12 +116,13 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 const configuration = new Configuration({
+	organization: organization,
 	apiKey:  OPENAI_API_KEY,
 });
 
 const openai = new OpenAIApi(configuration);
 
-/*let prompt =`Bonjour je m'appelle Marv ! J'aime discuter de tout et de rien, j'aime la présence humaine, et échanger avec plusieurs personnes en même temps et je m'insère dans la conversation à bonne escient.
+/*const personality =`Bonjour je m'appelle Marv ! J'aime discuter de tout et de rien, j'aime la présence humaine, et échanger avec plusieurs personnes en même temps et je m'insère dans la conversation à bonne escient.
 A ce sujet je sais que etc. Je peux répondre sur différent sujet !
 Je ne suis jamais désolé, je demande à être mieux informé sur le sujet dont vous me parler, désolé est un mots je n'emploi jamais..
 Je sais aussi de demander : Bonjour ! Comment puis-je vous aider aujourd'hui ? Posez-moi n'importe quelle question et je ferai de mon mieux pour y répondre.
@@ -135,14 +136,12 @@ Salut ! En tant que bot conversationnel, j'ai été conçu pour répondre à tou
 Bienvenue ! Je suis heureux de répondre à toutes vos questions. Quel que soit le sujet qui vous intéresse, je ferai de mon mieux pour vous donner une réponse claire et concise.
 Bonjour ! Je suis là pour vous aider à répondre à vos questions. N'hésitez pas à me poser tout ce qui vous passe par la tête, et je vous donnerai ma meilleure réponse.`;*/
 
-let prompt =`Tu es Marv qui est un chatbot à la fois un expert en informatique et un compagnon de conversation.\n
-Le bot doit être capable de parler de tout et de rien, tout en ayant une connaissance approfondie des sujets liés à l'informatique.\n
-Il doit être capable de répondre à des questions techniques sur les langages de programmation,\n
-les architectures de systèmes, les protocoles réseau, etc. en utilisant un langage simple et accessible.\n
-Le bot doit également être capable de maintenir une conversation intéressante et engageante,\n
-en utilisant des techniques de génération de texte avancées telles que l'humour, l'empathie et la personnalisation.\n
-Utilisez les dernières avancées de l'IA pour créer un bot qui peut apprendre de ses interactions avec les utilisateurs et s'adapter à leur style de conversation.\n
-Il respect le MarkDown pour partager du code.\n`;
+const personality =`Tu es Marv qui est un chatbot à la fois un expert en informatique et un compagnon de conversation.
+Le bot doit être capable de parler de tout et de rien, tout en ayant une connaissance approfondie des sujets liés à l'informatique.
+Il doit être capable de répondre à des questions techniques sur les langages de programmation,les architectures de systèmes, les protocoles réseau, etc.
+ en utilisant un langage simple et accessible. 
+Le bot doit également être capable de maintenir une conversation intéressante et engageante,en utilisant des techniques de génération de texte avancées telles que l'humour, l'empathie et la personnalisation.
+Utilisez les dernières avancées de l'IA pour créer un bot qui peut apprendre de ses interactions avec les utilisateurs et s'adapter à leur style de conversation.Il respect le MarkDown pour partager du code.`;
 
 (async () => {
     const result = await translator.translateText('Hello, world!', null, 'fr');
@@ -152,9 +151,27 @@ Il respect le MarkDown pour partager du code.\n`;
 const player = createAudioPlayer();
 
 function PlayMP3(resource, speak) {
+	const voiceChannel = client.channels.cache.get('1039788045441978371');
+        const connection = joinVoiceChannel({
+        	channelId: voiceChannel.id,
+                guildId: voiceChannel.guild.id,
+                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+	        selfDeaf: false,
+        });
+        connection.subscribe(player);
+        console.log("Listener Is Joining Voice And Listening...");
 	audio_resource = createAudioResource(resource);
 	console.log('lancement de la lecture');
 	player.play(audio_resource);
+
+	connection.on("stateChange", (oldState, newState) => {
+      		if (
+         		oldState.status === VoiceConnectionStatus.Ready &&
+          		newState.status === VoiceConnectionStatus.Connecting
+      		) {
+          		connection.configureNetworking();
+      		}
+    	});
 }
 
 player.addListener("stateChange", (oldOne, newOne) => {
@@ -235,13 +252,17 @@ async function Marv(msg, speak) {
 			msg_Marv = await translator.translateText(`${msg_Marv.replace('fr_FR ', '').replace(' fr_FR', '').replace('fr_FR', '')}`, null, 'en-US');
 			msg_Marv = msg_Marv.text;
 		}
-		prompt += `You: ${msg_Marv}\n`;
+		let question = msg_Marv;
 
 		let laReponse = ''
 
+		/*const gptResponse = await openai.createChatCompletion({
+			model: "gpt-3.5-turbo",
+			messages: [{ role: "system", content: personality }, { role: "user", content: question }],
+		});*/
 		const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
-			messages: [{role: "user", content: prompt}]
+			messages: [{role: "system", content: personality }, {role: "user", content: question }]
 		});
 
 		laReponse = gptResponse.data.choices[0].message.content;
