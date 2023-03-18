@@ -243,37 +243,47 @@ function escapeHtml(text) {
   
   
 const getData = async (resquest) => {
-    try {
-        const url = "https://www.google.com/search?q="+resquest+"&gl=fr&hl=fr";
-        const response = await unirest.get(url).headers({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"
-        })
-		const $ = cheerio.load(response.body) 
-		let ads = [];
-        $("#tads .uEierd").each((i, el) => {
-            let sitelinks = [];
-            ads[i] = {
-                title: $(el).find(".v0nnCb span").text(),
-                snippet: $(el).find(".lyLwlc").text(),
-                displayed_link: $(el).find(".qzEoUe").text(),
-                link: $(el).find("a.sVXRqc").attr("href"),
-            }
-            if ($(el).find(".UBEOKe").length) {
-                $(el).find(".MhgNwc").each((i, el) => {
-                    sitelinks.push({
-                        title: $(el).find("h3").text(),
-                        link: $(el).find("a").attr("href"),
-                        snippet: $(el).find(".lyLwlc").text()
-                    })
-                }) 
-				ads[i].sitelinks = sitelinks
-            }
-        }) 
-		console.log(ads)
-    } catch (e) {
-        console.log(e);
-    }
+	return unirest
+	.get("https://www.google.com/search?q="+resquest+"&gl=fr&hl=fr")
+	.headers({
+		"User-Agent":
+		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
+	})
+	.then((response) => {
+		let $ = cheerio.load(response.body);
+
+		let titles = [];
+		let links = [];
+		let snippets = [];
+		let displayedLinks = [];
+
+		$(".yuRUbf > a > h3").each((i, el) => {
+		titles[i] = $(el).text();
+		});
+		$(".yuRUbf > a").each((i, el) => {
+		links[i] = $(el).attr("href");
+		});
+		$(".g .VwiC3b ").each((i, el) => {
+		snippets[i] = $(el).text();
+		});
+		$(".g .yuRUbf .NJjxre .tjvcx").each((i, el) => {
+		displayedLinks[i] = $(el).text();
+		});
+
+		const organicResults = [];
+
+		for (let i = 0; i < titles.length; i++) {
+		organicResults[i] = {
+			title: titles[i],
+			links: links[i],
+			snippet: snippets[i],
+			displayedLink: displayedLinks[i],
+		};
+		}
+		console.log(organicResults)
+	});
 }
+
 
 async function Marv(msg, speak) {
 	console.log('Marv is speak : ' + speak)
