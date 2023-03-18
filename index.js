@@ -318,7 +318,7 @@ async function Marv(msg, speak) {
 			model: "gpt-3.5-turbo",
 			messages: [{ role: "system", content: personality }, { role: "user", content: question }],
 		});*/
-		/*const gptResponse = await openai.createChatCompletion({
+		const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
 			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "system", content: webrequest }, {role: "user", content: question }]
 		});
@@ -341,7 +341,7 @@ async function Marv(msg, speak) {
 		}
 		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
-		historic = question + "\n" + laReponse;*/
+		historic = question + "\n" + laReponse;
 	}
 }
 message = ''
