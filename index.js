@@ -1,4 +1,4 @@
-const { token, OPENAI_API_KEY, DEEPL_API_KEY, GCkey, organization } = require('./config.json');
+const { token, OPENAI_API_KEY, DEEPL_API_KEY, GCkey, organization, GOOGLE_KEY_FOR_SEARCH, CX } = require('./config.json');
 const fs = require("fs");
 const { Client, Collection, GatewayIntentBits, ActivityType, Events } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates] });
@@ -19,9 +19,12 @@ const tts = new textToSpeech.TextToSpeechClient();
 let botisConnected = false;
 let speak = false;
 let historic = '';
-const cheerio = require("cheerio");
-const unirest = require("unirest");
 const fetch = require('node-fetch');
+const request = require('request');
+const cheerio = require('cheerio');
+const axios = require('axios');
+const sanitizeHtml = require('sanitize-html');
+const { compile } = require("html-to-text");
 
 /*addSpeechEvent(client, {
 	key: GCkey,
@@ -246,67 +249,60 @@ function escapeHtml(text) {
 		.replace(/ /g, "+");
 }
 
-function escapeHtml2(text) {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#039;");
-}
+async function searchGoogle(query) {
+	const apiKey = GOOGLE_KEY_FOR_SEARCH;
+	const searchEngineId = CX;
 
-  
-const getData = (resquest) => {
-	return unirest
-	.get("https://www.google.com/search?q="+resquest+"&gl=fr&hl=fr")
-	.headers({
-		"User-Agent":
-		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
-	})
-	.then((response) => {
-		let $ = cheerio.load(response.body);
-
-		let titles = [];
-		let snippets = [];
-
-		$(".yuRUbf > a > h3").each((i, el) => {
-		titles[i] = $(el).text();
-		});
-		$(".g .VwiC3b ").each((i, el) => {
-		snippets[i] = $(el).text();
-		});
-		
-		let organicResults = '';
-
-		for (let i = 0; i < 4; i++) {
-			organicResults += escapeHtml2(titles[i]).toString();
-			organicResults += escapeHtml2(snippets[i]).toString() + ' ; ';
-		}
-
-		organicResults = organicResults.toString();
-
-		organicResults = getFilteredLink(escapeHtml(organicResults), ['bonjour', 'ça va'])
-		.then(link => {
-			console.log(link);
-			return link.toString();
+	const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${escapeHtml(searchEngineId)}&q=${query}`;
+	
+	return fetch(url)
+		.then(response => response.json())
+		.then(data => {
+			const result = data.items;
+			const links = result.map(item => item.snippet);
+			return links.slice(0, 6);
 		})
-		.catch(error => {
-			console.error(error);
-		});
-
-		organicResults = organicResults.toString();
-		console.log(organicResults)
-		return organicResults
-	});
+		.catch(error => console.error(error));
 }
 
-async function getFilteredLink(searchQuery, wordToRemove) {
-	const response = await fetch(`https://www.google.com/search?q=${searchQuery}&gl=fr&hl=fr`);
-	const html = await response.text();
-	const regex = new RegExp(`(^https?[^&]*)(.*${wordToRemove[0]}.*$)?`);
-	const link = html.match(regex)[1];
-	return link;
-}
+const convert = compile({
+	preserveNewlines: false,
+	wordwrap: false,
+	// The main content of a website will typically be found in the main element
+	baseElements: { selectors: ["main"] },
+	selectors: [
+	  {
+		selector: "a",
+		options: { ignoreHref: true },
+	  },
+	],
+});
+
+/*async function getVisibleTextFromLink(link) {
+    try {
+		const response = await axios.get(link);
+
+		if (response.status === 200 && !link.endsWith('pdf') && !link.endsWith('exe') && !link.endsWith('msi')) {
+		  const $ = cheerio.load(response.data);
+		  const bodyHtml = $('body').html();
+		  bodyHtml = convert(bodyHtml);
+		  const sanitizedHtml = sanitizeHtml(bodyHtml.replace(/(\r\n|\n|\r)/gm, ""), {
+			allowedTags: [],
+			allowedAttributes: {},
+			exclusiveFilter: (frame) => {
+			  return frame.tag === 'script' || frame.tag === 'style' || frame.tag === 'link' && frame.attribs.rel === 'stylesheet';
+			},
+		  });
+		  console.log('sanitized : ' + sanitizedHtml)
+		  const bodyText = $(sanitizedHtml).text();
+		  const visibleText = bodyText.substring(0, 150).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");;
+		  return visibleText;
+		}
+    } catch (error) {
+        console.error(`Erreur lors de la récupération du contenu pour ${link}: ${error.message}`);
+    }
+}*/
+
 
 async function Marv(msg, speak) {
 	console.log('Marv is speak : ' + speak)
@@ -335,9 +331,25 @@ async function Marv(msg, speak) {
 		}
 		let question = msg_Marv;
 
-		let laReponse = ''
+		let laReponse = '';
 		
-		let webrequest = getData.toString();
+		let webrequest = '';
+
+		let text = '';
+		
+		try {
+			let snippets = await searchGoogle(question);
+	
+			for (let i = 0; i < snippets.length; i++) { //links.length; i++) {
+				let snippet = snippets[i];
+				text = text + ' ' + snippet; //await getVisibleTextFromLink(link);
+			}
+			webrequest = text.substring(0, 500);
+		} catch (error) {
+			console.error(`Erreur lors du traitement de la requête: ${error.message}`);
+		}
+
+		console.log(webrequest)
 
 		/*const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
@@ -345,7 +357,7 @@ async function Marv(msg, speak) {
 		});*/
 		const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
-			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "system", content: webrequest }, {role: "user", content: question }]
+			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "assistant", content: JSON.stringify(webrequest) }, {role: "user", content: question }]
 		});
 
 		laReponse = gptResponse.data.choices[0].message.content;
