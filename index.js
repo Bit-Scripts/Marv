@@ -281,7 +281,7 @@ const getData = async (resquest) => {
 			//displayedLink: displayedLinks[i],
 		};
 		}
-		organicResults = convert.toPlainText(organicResults);
+		organicResults = convert.toPlainText(organicResults).replace('\n', '');
 		console.log(organicResults)
 	});
 }
