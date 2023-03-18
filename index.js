@@ -271,7 +271,7 @@ const getData = async (resquest) => {
 		displayedLinks[i] = $(el).text();
 		});
 
-		const organicResults = [];
+		let organicResults = [];
 
 		for (let i = 0; i < titles.length; i++) {
 		organicResults[i] = {
