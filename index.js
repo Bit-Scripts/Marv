@@ -242,7 +242,7 @@ function escapeHtml(text) {
   }
   
   
-const getData = async (resquest) => {
+const getData = (resquest) => {
 	return unirest
 	.get("https://www.google.com/search?q="+resquest+"&gl=fr&hl=fr")
 	.headers({
@@ -260,14 +260,8 @@ const getData = async (resquest) => {
 		$(".yuRUbf > a > h3").each((i, el) => {
 		titles[i] = $(el).text();
 		});
-		$(".yuRUbf > a").each((i, el) => {
-		links[i] = $(el).attr("href");
-		});
 		$(".g .VwiC3b ").each((i, el) => {
 		snippets[i] = $(el).text();
-		});
-		$(".g .yuRUbf .NJjxre .tjvcx").each((i, el) => {
-		displayedLinks[i] = $(el).text();
 		});
 
 		let organicResults = '';
