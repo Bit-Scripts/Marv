@@ -280,6 +280,7 @@ const getData = async (resquest) => {
 			displayedLink: displayedLinks[i],
 		};
 		}
+		organicResults = result.map(({ organicResults }) => organicResults).join('\n');
 		console.log(organicResults)
 	});
 }
