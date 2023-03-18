@@ -253,9 +253,7 @@ const getData = (resquest) => {
 		let $ = cheerio.load(response.body);
 
 		let titles = [];
-		let links = [];
 		let snippets = [];
-		let displayedLinks = [];
 
 		$(".yuRUbf > a > h3").each((i, el) => {
 		titles[i] = $(el).text();
@@ -266,12 +264,12 @@ const getData = (resquest) => {
 
 		let organicResults = '';
 
-		for (let i = 0; i < 5; i++) {
-			organicResults += 'title:' + titles[i];
-			organicResults += 'snippet: ' + snippets[i];
+		for (let i = 0; i < 4; i++) {
+			organicResults += 'title: ' + titles[i].toString();
+			organicResults += 'snippet: ' + snippets[i].toString();
 		};
 		
-		organicResults = organicResults.replace('\n', '+');
+		organicResults = organicResults.toString().replace('\n', '+');
 		console.log(organicResults)
 		return organicResults
 	});
