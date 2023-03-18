@@ -16,8 +16,9 @@ const util = require('util');
 const textToSpeech = require('@google-cloud/text-to-speech');
 const { addSpeechEvent, resolveSpeechWithGoogleSpeechV2 } = require("discord-speech-recognition");
 const tts = new textToSpeech.TextToSpeechClient();
-let botisConnected = false
-let speak = false
+let botisConnected = false;
+let speak = false;
+let historic = '';
 /*addSpeechEvent(client, {
 	key: GCkey,
 	lang: 'fr-FR',
@@ -262,7 +263,7 @@ async function Marv(msg, speak) {
 		});*/
 		const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
-			messages: [{role: "system", content: personality }, {role: "user", content: question }]
+			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "user", content: question }]
 		});
 
 		laReponse = gptResponse.data.choices[0].message.content;
@@ -283,6 +284,7 @@ async function Marv(msg, speak) {
 		}
 		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
+		historic = question + "\n" + laReponse;
 	}
 }
 message = ''
