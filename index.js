@@ -273,7 +273,7 @@ const getData = async (resquest) => {
 
 		let organicResults = [];
 
-		for (let i = 0; i < titles.length; i++) {
+		for (let i = 0; i < 4; i++) {
 		organicResults[i] = {
 			title: titles[i],
 			//links: links[i],
