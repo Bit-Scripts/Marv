@@ -273,8 +273,8 @@ const getData = (resquest) => {
 		let organicResults = '';
 
 		for (let i = 0; i < 4; i++) {
-			organicResults += 'title: ' + escapeHtml2(titles[i]).toString();
-			organicResults += 'snippet: ' + escapeHtml2(snippets[i]).toString();
+			organicResults += escapeHtml2(titles[i]).toString();
+			organicResults += escapeHtml2(snippets[i]).toString();
 		};
 		
 		organicResults = organicResults.toString();
