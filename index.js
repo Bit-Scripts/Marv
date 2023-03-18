@@ -276,9 +276,9 @@ const getData = async (resquest) => {
 		for (let i = 0; i < titles.length; i++) {
 		organicResults[i] = {
 			title: titles[i],
-			links: links[i],
+			//links: links[i],
 			snippet: snippets[i],
-			displayedLink: displayedLinks[i],
+			//displayedLink: displayedLinks[i],
 		};
 		}
 		organicResults = convert.toPlainText(organicResults);
