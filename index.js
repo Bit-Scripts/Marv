@@ -214,7 +214,7 @@ async function synthesizeSpeech(text, Marv_channel, speak) {
 	text = text.replace('\n', '. ')
 
 	if (text.length >= 636) {
-		text = "texte trop long ne epxu pas être vocalisé";
+		text = "texte trop long ne pouvant pas être vocalisé";
 	}
 	// Construct the request
 	const request = {
