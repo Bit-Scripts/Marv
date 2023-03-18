@@ -304,7 +304,7 @@ async function Marv(msg, speak) {
 
 		let laReponse = ''
 		
-		let webrequest = getData(escapeHtml(text))
+		let webrequest = getData(escapeHtml(question))
 
 		/*const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
