@@ -239,8 +239,16 @@ function escapeHtml(text) {
 		.replace(/"/g, "&quot;")
 		.replace(/'/g, "&#039;")
 		.replace(/ /g, "+");
-  }
-  
+}
+
+function escapeHtml2(text) {
+	return text
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
   
 const getData = (resquest) => {
 	return unirest
@@ -261,15 +269,15 @@ const getData = (resquest) => {
 		$(".g .VwiC3b ").each((i, el) => {
 		snippets[i] = $(el).text();
 		});
-
+		
 		let organicResults = '';
 
 		for (let i = 0; i < 4; i++) {
-			organicResults += 'title: ' + titles[i].toString();
-			organicResults += 'snippet: ' + snippets[i].toString();
+			organicResults += 'title: ' + escapeHtml2(titles[i]).toString();
+			organicResults += 'snippet: ' + escapeHtml2(snippets[i]).toString() + '\n';
 		};
 		
-		organicResults = organicResults.toString().replace('\n', '+');
+		organicResults = organicResults.toString();
 		console.log(organicResults)
 		return organicResults
 	});
@@ -310,7 +318,7 @@ async function Marv(msg, speak) {
 			model: "gpt-3.5-turbo",
 			messages: [{ role: "system", content: personality }, { role: "user", content: question }],
 		});*/
-		const gptResponse = await openai.createChatCompletion({
+		/*const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
 			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "system", content: webrequest }, {role: "user", content: question }]
 		});
@@ -333,7 +341,7 @@ async function Marv(msg, speak) {
 		}
 		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
-		historic = question + "\n" + laReponse;
+		historic = question + "\n" + laReponse;*/
 	}
 }
 message = ''
