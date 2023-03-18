@@ -21,7 +21,6 @@ let speak = false;
 let historic = '';
 const cheerio = require("cheerio");
 const unirest = require("unirest");
-const convert = require('json-to-plain-text');
 
 /*addSpeechEvent(client, {
 	key: GCkey,
@@ -271,22 +270,18 @@ const getData = async (resquest) => {
 		displayedLinks[i] = $(el).text();
 		});
 
-		let organicResults = [];
+		let organicResults = '';
 
-		for (let i = 0; i < 4; i++) {
-		organicResults[i] = {
-			title: titles[i],
-			//links: links[i],
-			snippet: snippets[i],
-			//displayedLink: displayedLinks[i],
+		for (let i = 0; i < 5; i++) {
+			organicResults += 'title:' + titles[i];
+			organicResults += 'snippet: ' + snippets[i];
 		};
-		}
-		organicResults = convert.toPlainText(organicResults).replace(' ', '').replace('\n', '+');
+		
+		organicResults = organicResults.replace('\n', '+');
 		console.log(organicResults)
 		return organicResults
 	});
 }
-
 
 async function Marv(msg, speak) {
 	console.log('Marv is speak : ' + speak)
