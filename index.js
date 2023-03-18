@@ -21,6 +21,7 @@ let speak = false;
 let historic = '';
 const cheerio = require("cheerio");
 const unirest = require("unirest");
+const fetch = require('node-fetch');
 
 /*addSpeechEvent(client, {
 	key: GCkey,
@@ -209,8 +210,12 @@ player.addListener("stateChange", (oldOne, newOne) => {
 
 async function synthesizeSpeech(text, Marv_channel, speak) {
 	if (!speak) return
-
+	
 	text = text.replace('\n', '. ')
+
+	if (text.length >= 636) {
+		text = "texte trop long ne epxu pas être vocalisé";
+	}
 	// Construct the request
 	const request = {
 		input: {text: text},
@@ -249,6 +254,7 @@ function escapeHtml2(text) {
 		.replace(/"/g, "&quot;")
 		.replace(/'/g, "&#039;");
 }
+
   
 const getData = (resquest) => {
 	return unirest
@@ -274,13 +280,32 @@ const getData = (resquest) => {
 
 		for (let i = 0; i < 4; i++) {
 			organicResults += escapeHtml2(titles[i]).toString();
-			organicResults += escapeHtml2(snippets[i]).toString();
-		};
-		
+			organicResults += escapeHtml2(snippets[i]).toString() + ' ; ';
+		}
+
+		organicResults = organicResults.toString();
+
+		organicResults = getFilteredLink(escapeHtml(organicResults), ['bonjour', 'ça va'])
+		.then(link => {
+			console.log(link);
+			return link.toString();
+		})
+		.catch(error => {
+			console.error(error);
+		});
+
 		organicResults = organicResults.toString();
 		console.log(organicResults)
 		return organicResults
 	});
+}
+
+async function getFilteredLink(searchQuery, wordToRemove) {
+	const response = await fetch(`https://www.google.com/search?q=${searchQuery}&gl=fr&hl=fr`);
+	const html = await response.text();
+	const regex = new RegExp(`(^https?[^&]*)(.*${wordToRemove[0]}.*$)?`);
+	const link = html.match(regex)[1];
+	return link;
 }
 
 async function Marv(msg, speak) {
@@ -312,7 +337,7 @@ async function Marv(msg, speak) {
 
 		let laReponse = ''
 		
-		let webrequest = getData(escapeHtml(question)).toString()
+		let webrequest = getData.toString();
 
 		/*const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
