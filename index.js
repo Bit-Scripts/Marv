@@ -21,6 +21,7 @@ let speak = false;
 let historic = '';
 const cheerio = require("cheerio");
 const unirest = require("unirest");
+const convert = require('json-to-plain-text');
 
 /*addSpeechEvent(client, {
 	key: GCkey,
@@ -280,7 +281,7 @@ const getData = async (resquest) => {
 			displayedLink: displayedLinks[i],
 		};
 		}
-		organicResults = result.map(({ organicResults }) => organicResults).join('\n');
+		organicResults = convert.toPlainText(organicResults);
 		console.log(organicResults)
 	});
 }

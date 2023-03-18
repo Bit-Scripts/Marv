@@ -33,6 +33,7 @@
     "google-tts-api": "^2.0.2",
     "http": "^0.0.1-security",
     "js-base64": "^3.7.5",
+    "json-to-plain-text": "^1.0.5",
     "libsodium": "^0.7.10",
     "libsodium-wrappers": "^0.7.10",
     "navigator": "^1.0.1",
