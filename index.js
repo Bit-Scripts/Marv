@@ -19,6 +19,9 @@ const tts = new textToSpeech.TextToSpeechClient();
 let botisConnected = false;
 let speak = false;
 let historic = '';
+const cheerio = require("cheerio");
+const unirest = require("unirest");
+
 /*addSpeechEvent(client, {
 	key: GCkey,
 	lang: 'fr-FR',
@@ -228,6 +231,50 @@ async function synthesizeSpeech(text, Marv_channel, speak) {
 	});
 }
 
+function escapeHtml(text) {
+	return text
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;")
+		.replace(/ /g, "+");
+  }
+  
+  
+const getData = async (resquest) => {
+    try {
+        const url = "https://www.google.com/search?q=resquest&gl=fr&hl=fr";
+        const response = await unirest.get(url).headers({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"
+        })
+		const $ = cheerio.load(response.body) 
+		let ads = [];
+        $("#tads .uEierd").each((i, el) => {
+            let sitelinks = [];
+            ads[i] = {
+                title: $(el).find(".v0nnCb span").text(),
+                snippet: $(el).find(".lyLwlc").text(),
+                displayed_link: $(el).find(".qzEoUe").text(),
+                link: $(el).find("a.sVXRqc").attr("href"),
+            }
+            if ($(el).find(".UBEOKe").length) {
+                $(el).find(".MhgNwc").each((i, el) => {
+                    sitelinks.push({
+                        title: $(el).find("h3").text(),
+                        link: $(el).find("a").attr("href"),
+                        snippet: $(el).find(".lyLwlc").text()
+                    })
+                }) 
+				ads[i].sitelinks = sitelinks
+            }
+        }) 
+		console.log(ads)
+    } catch (e) {
+        console.log(e);
+    }
+}
+
 async function Marv(msg, speak) {
 	console.log('Marv is speak : ' + speak)
 	if (!speak) return
@@ -256,6 +303,8 @@ async function Marv(msg, speak) {
 		let question = msg_Marv;
 
 		let laReponse = ''
+		
+		let webrequest = getData(escapeHtml(text))
 
 		/*const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
@@ -263,7 +312,7 @@ async function Marv(msg, speak) {
 		});*/
 		const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
-			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "user", content: question }]
+			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "system", content: webrequest }, {role: "user", content: question }]
 		});
 
 		laReponse = gptResponse.data.choices[0].message.content;
