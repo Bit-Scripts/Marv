@@ -1,6 +1,6 @@
 const { token, OPENAI_API_KEY, DEEPL_API_KEY, GCkey, organization, GOOGLE_KEY_FOR_SEARCH, CX } = require('./config.json');
 const fs = require("fs");
-const { Client, Collection, GatewayIntentBits, ActivityType, Events } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, ActivityType, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates] });
 const path = require('path');
 const { exists } =require('fs');
@@ -25,6 +25,9 @@ const cheerio = require('cheerio');
 const axios = require('axios');
 const sanitizeHtml = require('sanitize-html');
 const { compile } = require("html-to-text");
+const {  } = require('discord.js');
+const { setTimeout } = require('node:timers/promises');
+
 
 /*addSpeechEvent(client, {
 	key: GCkey,
@@ -109,19 +112,104 @@ client.on(Events.InteractionCreate, async interaction => {
 		console.error(`Error executing ${interaction.commandName}`);
 		console.error(error);
 	}
-});
 
-client.on(Events.InteractionCreate, async interaction => {
-	if (!interaction.isChatInputCommand()) return;
-	const interactionMessage = await interaction.fetchReply();
-	//console.log(interactionMessage.content);
-	if (interactionMessage.content !== "Mais, vous savez, moi je ne crois pas qu'il y ait de bonne ou de mauvaise situation. Moi, si je devais résumer ma vie aujourd'hui avec vous, je dirais que c'est d'abord des rencontres, des gens qui m'ont tendu la main, peut-être à un moment où je ne pouvais pas, où j'étais seul chez moi. Et c'est assez curieux de se dire que les hasards, les rencontres forgent une destinée... Parce que quand on a le goût de la chose quand on a le goût de la chose bien faite, le beau geste, parfois on ne trouve pas l'interlocuteur en face, je dirais, le miroir qui vous aide à avancer. Alors ce n'est pas mon cas, comme je le disais là, puisque moi au contraire, j'ai pu ; et je dis merci à la vie, je lui dis merci, je chante la vie, je danse la vie... Je ne suis qu'amour ! Et finalement, quand beaucoup de gens aujourd'hui me disent « Mais comment fais-tu pour avoir cette humanité ? », eh ben je leur réponds très simplement, je leur dis que c'est ce goût de l'amour, ce goût donc qui m'a poussé aujourd'hui à entreprendre une construction mécanique, mais demain, qui sait, peut-être seulement à me mettre au service de la communauté, à faire le don, le don de soi...") {
-		speak = true
-		synthesizeSpeech(interactionMessage.content.replace('/',' slash ').replace('/',' slash ').replace('Low-Fuel','LowFuel').replace('-',' tiret ').replace('-',' tiret '), Marv_channel, speak)
-	} else {
-		PlayMP3('./monologue.mp3', speak)
+	if (interaction.commandName === 'newtask') {
+		const collector = interaction.channel.createMessageComponentCollector({ time: 86400000 });
+		const nom = interaction.options.getString('nom');
+    
+		collector.on('collect', async i => {
+			if (i.customId === 'accept') {
+				await i.deferUpdate();
+				await setTimeout(2000);
+				await i.editReply({ content: `La tâche "${nom}" a été acceptée par ${i.user}.`, components: [] });
+			}
+			if (i.customId === 'abandon') {
+				await i.deferUpdate();
+				await setTimeout(2000);
+				await i.editReply({ content: `La tâche "${nom}" a été abandonnée par ${i.user}.`, components: [] });
+			}
+		});
+	
+		collector.on('end', collected => {
+			if (collected.size > 0) {
+				console.log(`Le collector pour la tâche "${nom}" a collecté ${collected.size} interactions.`);
+			} else {
+				console.log(`Le collector pour la tâche "${nom}" s'est terminé sans collecter d'interactions.`);
+			}
+		});
+	}
+
+	if (interaction.commandName === 'monologue') {
+		const interactionMessage = await interaction.fetchReply();
+		//console.log(interactionMessage.content);
+		if (interactionMessage.content !== "Mais, vous savez, moi je ne crois pas qu'il y ait de bonne ou de mauvaise situation. Moi, si je devais résumer ma vie aujourd'hui avec vous, je dirais que c'est d'abord des rencontres, des gens qui m'ont tendu la main, peut-être à un moment où je ne pouvais pas, où j'étais seul chez moi. Et c'est assez curieux de se dire que les hasards, les rencontres forgent une destinée... Parce que quand on a le goût de la chose quand on a le goût de la chose bien faite, le beau geste, parfois on ne trouve pas l'interlocuteur en face, je dirais, le miroir qui vous aide à avancer. Alors ce n'est pas mon cas, comme je le disais là, puisque moi au contraire, j'ai pu ; et je dis merci à la vie, je lui dis merci, je chante la vie, je danse la vie... Je ne suis qu'amour ! Et finalement, quand beaucoup de gens aujourd'hui me disent « Mais comment fais-tu pour avoir cette humanité ? », eh ben je leur réponds très simplement, je leur dis que c'est ce goût de l'amour, ce goût donc qui m'a poussé aujourd'hui à entreprendre une construction mécanique, mais demain, qui sait, peut-être seulement à me mettre au service de la communauté, à faire le don, le don de soi...") {
+			speak = true
+			synthesizeSpeech(interactionMessage.content.replace('/',' slash ').replace('/',' slash ').replace('Low-Fuel','LowFuel').replace('-',' tiret ').replace('-',' tiret '), Marv_channel, speak)
+		} else {
+			PlayMP3('./monologue.mp3', speak)
+		}
 	}
 });
+
+/*client.on(Events.InteractionCreate, interaction => {
+	if (!interaction.isButton()) return;
+	console.log(interaction);
+});
+
+function attributetask(reaction_orig, message, user) {
+    message.reactions.removeAll();
+    if (reaction_orig.emoji.name == '👌') {
+        let content='@' + user.username;
+        let channel=message.channel;
+        let desc=message.embeds[0].description + '\n<@' + user.id + '> acceptée';
+        exampleEmbed
+             .setColor('#8659DC')
+             .setTitle('Tâche acceptée')
+             .setURL('http://heficience.com/')
+             .setAuthor('Tâche acceptée par ' + user.username, 'https://i.imgur.com/SlRpNoc.png', 'http://heficience.com/')
+             .setDescription(desc)
+               .setThumbnail(user.avatarURL())
+             .setTimestamp()
+             .setFooter('👌 Tâche acceptée 👍 Tâche terminée 👎 Tâche abandonnée \n' + content + ' acceptée', 'https://i.imgur.com/SlRpNoc.png');
+  
+        message.edit(exampleEmbed);
+        reacttask(message);
+    }
+    else if (reaction_orig.emoji.name == '👍') {
+        let content='@' + user.username;
+        let channel=message.channel;
+        let desc=message.embeds[0].description + '\n<@' + user.id + '> finit';
+        exampleEmbed
+             .setColor('#1D9213')
+             .setTitle('Tâche terminée')
+             .setURL('http://heficience.com/')
+             .setAuthor('Tâche terminée par ' + user.username, 'https://i.imgur.com/SlRpNoc.png', 'http://heficience.com/')
+             .setDescription(desc)
+               .setThumbnail(user.avatarURL())
+             .setTimestamp()
+             .setFooter('👌 Tâche acceptée 👍 Tâche terminée 👎 Tâche abandonnée \n' + content + ' finit', 'https://i.imgur.com/SlRpNoc.png');
+  
+        message.edit(exampleEmbed);
+        //reacttask(message);
+    }
+    else if (reaction_orig.emoji.name == '👎') {
+        let content='@' + user.username;
+        let channel=message.channel;
+        let desc=message.embeds[0].description + '\n<@' + user.id + '> abandonnée';
+        exampleEmbed
+           .setColor('#FF0202')
+           .setTitle('Tâche laissée vacante')
+           .setURL('http://heficience.com/')
+           .setAuthor('Tâche abandonée par ' + user.username, 'https://i.imgur.com/SlRpNoc.png', 'http://heficience.com/')
+           .setDescription(desc)
+           .setThumbnail(user.avatarURL())
+           .setTimestamp()
+           .setFooter('👌 Tâche acceptée 👍 Tâche terminée 👎 Tâche abandonnée \n' + content + ' abandonnée', 'https://i.imgur.com/SlRpNoc.png');
+  
+        message.edit(exampleEmbed);
+        reacttask(message);
+    }
+  }*/
 
 const configuration = new Configuration({
 	organization: organization,
