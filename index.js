@@ -304,7 +304,7 @@ async function synthesizeSpeech(text, Marv_channel, speak) {
 	
 	text = text.replace('\n', '. ')
 
-	if (text.length >= 636) {
+	if (text.length >= 6000) {
 		text = "texte trop long ne pouvant pas être vocalisé";
 	}
 	// Construct the request
@@ -444,7 +444,7 @@ async function Marv(msg, speak) {
 			messages: [{ role: "system", content: personality }, { role: "user", content: question }],
 		});*/
 		const gptResponse = await openai.createChatCompletion({
-			model: "gpt-3.5-turbo",
+			model: "gpt-4",
 			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "assistant", content: JSON.stringify(webrequest) }, {role: "user", content: question }]
 		});
 
@@ -459,7 +459,7 @@ async function Marv(msg, speak) {
 
 		await msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
 
-		if (laReponse.length >= 2000) {
+		if (laReponse.length >= 6000) {
 			await synthesizeSpeech('Votre message étant particulièrement long, je vous invite a allez voir dans le salon dédié', Marv_channel, speak);
 		} else {
 			await synthesizeSpeech(laReponse.replace('Marv :', '').replace('Marv:', '').replace('Marc', 'Marv'), Marv_channel, speak);
