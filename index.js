@@ -580,12 +580,16 @@ client.on("speech", (msg) => {
 	// If bot didn't recognize speech, content will be empty
 	if (!msg.content) return;
 	
-	if (msg.content.toLowerCase() === "top") {
+	marvChannel = client.channels.cache.get('1079588443929190420');
+
+	if (msg.content.toLowerCase() == 'TG') {
+		console.log('stop Marv');
+		marvChannel.send('stop Marv');
 		stop();
+		return;
 	}
 	
 	message = msg.content
-	marvChannel = client.channels.cache.get('1079588443929190420');
 	marvChannel.send('<@1058811530092748871> ' + msg.author.username + ' ' + message.replace('Marc', 'Marv'))
 
 	console.log(msg.author.username + ' ' + message?.replace('Marc', 'Marv'))
