@@ -582,7 +582,7 @@ client.on("speech", (msg) => {
 	
 	marvChannel = client.channels.cache.get('1079588443929190420');
 
-	if (msg.content.toLowerCase() == 'TG') {
+	if (msg.content.toLowerCase() == 'tg') {
 		console.log('stop Marv');
 		marvChannel.send('stop Marv');
 		stop();
