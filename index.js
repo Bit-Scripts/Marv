@@ -27,7 +27,8 @@ const sanitizeHtml = require('sanitize-html');
 const { compile } = require("html-to-text");
 const {  } = require('discord.js');
 const { setTimeout } = require('node:timers/promises');
-
+let numberMessage = 0;
+let numberMessageRead = 0;
 
 /*addSpeechEvent(client, {
 	key: GCkey,
@@ -246,7 +247,7 @@ Utilisez les dernières avancées de l'IA pour créer un bot qui peut apprendre 
 
 const player = createAudioPlayer();
 
-function PlayMP3(resource, speak) {
+/*function PlayMP3(resource, speak) {
 	const voiceChannel = client.channels.cache.get('1039788045441978371');
         const connection = joinVoiceChannel({
         	channelId: voiceChannel.id,
@@ -268,6 +269,98 @@ function PlayMP3(resource, speak) {
           		connection.configureNetworking();
       		}
     	});
+}*/
+
+// Ajoutez cettes variables en dehors de la fonction PlayMP3
+let queue = [];
+let isPlaying = false;
+
+function PlayMP3(resource, speak) {
+    console.log(resource);
+
+    // Ajoutez la ressource à la file d'attente
+    queue.push(resource);
+
+    // Si une lecture est en cours, ne faites rien d'autre
+    if (isPlaying) return;
+
+    playNextResource();
+
+    function playNextResource() {
+        if (queue.length === 0) {
+            isPlaying = false;
+            return;
+        }
+
+        isPlaying = true;
+
+        const voiceChannel = client.channels.cache.get('1039788045441978371');
+        const connection = joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: voiceChannel.guild.id,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            selfDeaf: false,
+        });
+        connection.subscribe(player);
+        console.log("Listener Is Joining Voice And Listening...");
+        audio_resource = createAudioResource(queue[0]);
+        console.log('lancement de la lecture');
+        player.play(audio_resource);
+
+        connection.on("stateChange", (oldState, newState) => {
+            if (
+                oldState.status === VoiceConnectionStatus.Ready &&
+                newState.status === VoiceConnectionStatus.Connecting
+            ) {
+                connection.configureNetworking();
+            }
+        });
+
+        // Modifiez cet événement pour détecter lorsque la lecture est terminée
+	player.on("idle", () => {
+    		isPlaying = false;
+    		// Ne quittez pas le salon vocal
+    		console.log("Playback finished.");
+    		let mp3File = queue.shift();
+		exists(mp3File, function (doesExist) {
+			setTimeout('', 5000);
+			if (doesExist) {
+				console.log('le fichier existe');
+				fs.unlink(mp3File, (err) => {
+				if (err) throw err;
+					console.log("File deleted!");
+				});
+			} else {
+				console.log('le fichier n\'existe pas');
+			}
+		});
+		// Ajoutez un délai de 1 seconde (1000 ms) avant de passer à la ressource suivante
+    		setTimeout(playNextResource, 1000);
+	});
+    }
+}
+
+// Ajoutez cette fonction pour arrêter la lecture en cours
+function stop() {
+    if (isPlaying) {
+        player.stop(true);
+        queue = []; // Videz la file d'attente
+	for (let i = 0; i <= 20; i++) {
+		exists(i + 'output.mp3', function (doesExist) {
+			if (doesExist) {
+				console.log('le fichier existe');
+				fs.unlink(i + "output.mp3", (err) => {
+				if (err) throw err;
+					console.log("File deleted!");
+				});
+			} else {
+				console.log('le fichier n\'existe pas');
+			}
+		});
+	}
+	numberMessage = 0;
+        console.log("Playback stopped and queue cleared.");
+    }
 }
 
 player.addListener("stateChange", (oldOne, newOne) => {
@@ -275,18 +368,24 @@ player.addListener("stateChange", (oldOne, newOne) => {
 });
 
 
-player.addListener("stateChange", (oldOne, newOne) => {
+/*player.addListener("stateChange", (oldOne, newOne) => {
 	console.log(newOne.status)
+	setTimeout('', 5000);
 	if (newOne.status === "idle") {
 		console.log('Fichier entièrement lu');
 		//channel = client.channels.cache.find(channel => channel.id === '1079588443929190420')
                	//channel.send('<@1058811530092748871>')
-		exists('output.mp3', function (doesExist) {
+		exists(numberMessageRead + 'output.mp3', function (doesExist) {
 			if (doesExist) {
 				console.log('le fichier existe');
-				fs.unlink("output.mp3", (err) => {
+				fs.unlink(numberMessageRead + "output.mp3", (err) => {
 				if (err) throw err;
 					console.log("File deleted!");
+					numberMessageRead++;
+					if (numberMessageRead < numberMessage) {
+						PlayMP3(numberMessageRead + 'output.mp3', speak);
+						return speak;
+					}
 				});
 			} else {
 				console.log('le fichier n\'existe pas');
@@ -296,7 +395,7 @@ player.addListener("stateChange", (oldOne, newOne) => {
 		addSpeechEvent.shouldProcessSpeech = !speak
 		return speak 
 	}
-});
+});*/
 
 
 async function synthesizeSpeech(text, Marv_channel, speak) {
@@ -320,10 +419,13 @@ async function synthesizeSpeech(text, Marv_channel, speak) {
 	const [response] = await tts.synthesizeSpeech(request);
 	// Write the binary audio content to a local file
 	const writeFile = util.promisify(fs.writeFile);
-	await writeFile('output.mp3', response.audioContent, 'binary')
+	await writeFile(numberMessage + 'output.mp3', response.audioContent, 'binary')
 	.then(_ => { 
-		console.log('Audio content written to file: output.mp3'); 
-		if (Marv_channel !== '1079588443929190420') PlayMP3('output.mp3', speak);
+		console.log('Audio content written to file: '+numberMessage+'output.mp3');
+		if (Marv_channel !== '1079588443929190420') {
+			PlayMP3(numberMessage + 'output.mp3', speak);
+			numberMessage++;
+		}
 	});
 }
 
@@ -337,7 +439,7 @@ function escapeHtml(text) {
 		.replace(/ /g, "+");
 }
 
-async function searchGoogle(query) {
+/*async function searchGoogle(query) {
 	const apiKey = GOOGLE_KEY_FOR_SEARCH;
 	const searchEngineId = CX;
 
@@ -351,9 +453,9 @@ async function searchGoogle(query) {
 			return links.slice(0, 6);
 		})
 		.catch(error => console.error(error));
-}
+}*/
 
-const convert = compile({
+/*const convert = compile({
 	preserveNewlines: false,
 	wordwrap: false,
 	// The main content of a website will typically be found in the main element
@@ -364,7 +466,7 @@ const convert = compile({
 		options: { ignoreHref: true },
 	  },
 	],
-});
+});*/
 
 /*async function getVisibleTextFromLink(link) {
     try {
@@ -425,7 +527,7 @@ async function Marv(msg, speak) {
 
 		let text = '';
 		
-		try {
+		/*try {
 			let snippets = await searchGoogle(question);
 	
 			for (let i = 0; i < snippets.length; i++) { //links.length; i++) {
@@ -437,15 +539,15 @@ async function Marv(msg, speak) {
 			console.error(`Erreur lors du traitement de la requête: ${error.message}`);
 		}
 
-		console.log(webrequest)
+		console.log(webrequest)*/
 
 		/*const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
 			messages: [{ role: "system", content: personality }, { role: "user", content: question }],
 		});*/
 		const gptResponse = await openai.createChatCompletion({
-			model: "gpt-4",
-			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "assistant", content: JSON.stringify(webrequest) }, {role: "user", content: question }]
+			model: "gpt-3.5-turbo",
+			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "user", content: question }]
 		});
 
 		laReponse = gptResponse.data.choices[0].message.content;
@@ -457,8 +559,12 @@ async function Marv(msg, speak) {
 
 		console.log('@' + laReponse);
 
-		await msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
-
+		try {
+			await msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
+		} catch {
+			await msg.channel.send(laReponse)
+		}
+	
 		if (laReponse.length >= 6000) {
 			await synthesizeSpeech('Votre message étant particulièrement long, je vous invite a allez voir dans le salon dédié', Marv_channel, speak);
 		} else {
@@ -473,6 +579,11 @@ message = ''
 client.on("speech", (msg) => {
 	// If bot didn't recognize speech, content will be empty
 	if (!msg.content) return;
+	
+	if (msg.content.toLowerCase() === "top") {
+		stop();
+	}
+	
 	message = msg.content
 	marvChannel = client.channels.cache.get('1079588443929190420');
 	marvChannel.send('<@1058811530092748871> ' + msg.author.username + ' ' + message.replace('Marc', 'Marv'))
@@ -507,5 +618,7 @@ client.on("messageCreate", async (msg) => {
 	addSpeechEvent.shouldProcessSpeechm = !speak ;
 	if (msg.content !== undefined && msg.content.includes('<@1058811530092748871>') && msg.content !== '<@1058811530092748871>' ) Marv(msg, speak)
 });
+
+stop();
 
 client.login(token);
