@@ -246,6 +246,7 @@ const player = createAudioPlayer();
 // Ajoutez cettes variables en dehors de la fonction PlayMP3
 let queue = [];
 let isPlaying = false;
+let speak = false;
 
 function PlayMP3(resource) {
     console.log(resource);
@@ -259,6 +260,7 @@ function PlayMP3(resource) {
     playNextResource();
 
     function playNextResource() {
+		speak = true;
         if (queue.length === 0) {
             isPlaying = false;
             return;
@@ -290,7 +292,6 @@ function PlayMP3(resource) {
 
         // Modifiez cet événement pour détecter lorsque la lecture est terminée
 		player.on('stateChange', (oldState, newState) => {
-			console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
 			if (
 				oldState.status === "playing" &&
 				newState.status === "idle"
@@ -299,23 +300,23 @@ function PlayMP3(resource) {
 				// Ne quittez pas le salon vocal
 				console.log("Playback finished.");
 				let mp3File = queue.shift();
-				if (mp3File !== "monologue.mp3") {
-					exists(number + 'output.mp3', function (doesExist) {
+				if (mp3File !== "monologue.mp3" && speak) {
+					console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
+					exists(mp3File, (doesExist) => {
 						if (doesExist) {
-							console.log('le fichier ' + number + 'output.mp3 existe');
-							let mp3FileHere = number + "output.mp3";
-							fs.unlink(path.join(__dirname, mp3FileHere), (err) => {
+							console.log('le fichier ' + mp3File + ' existe');
+							fs.unlink(path.join(__dirname, mp3File), (err) => {
 							if (err) throw err;
 								console.log("File deleted!");
+								// Ajoutez un délai de 1 seconde (1000 ms) avant de passer à la ressource suivante
+								playNextResource();
 							});
 						} else {
 							console.log('le fichier n\'existe pas');
 						}
 					});
+					speak = false;
 				}
-				
-				// Ajoutez un délai de 1 seconde (1000 ms) avant de passer à la ressource suivante
-				setTimeout(playNextResource, 1000);
 			}
 		});
     }
@@ -399,14 +400,6 @@ async function Marv(msg) {
 
 		let laReponse = '';
 		
-		let webrequest = '';
-
-		let text = '';
-		
-		/*const gptResponse = await openai.createChatCompletion({
-			model: "gpt-3.5-turbo",
-			messages: [{ role: "system", content: personality }, { role: "user", content: question }],
-		});*/
 		const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
 			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "user", content: question }]
