@@ -17,7 +17,6 @@ const textToSpeech = require('@google-cloud/text-to-speech');
 const { addSpeechEvent, resolveSpeechWithGoogleSpeechV2 } = require("discord-speech-recognition");
 const tts = new textToSpeech.TextToSpeechClient();
 let botisConnected = false;
-let speak = false;
 let historic = '';
 const fetch = require('node-fetch');
 const request = require('request');
@@ -59,9 +58,8 @@ client.once("ready", () => {
 
 client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => { // Listeing to the voiceStateUpdate event
     if (newVoiceState.channel) { // The member connected to a channel.
-		speak = false
-		addSpeechEvent.shouldProcessSpeech = !speak
-		return speak
+		addSpeechEvent.shouldProcessSpeech = true
+		return;
 	} else if (oldVoiceState.channel) { // The member disconnected from a channel.
         console.log(`${oldVoiceState.member.user.tag} disconnected from ${oldVoiceState.channel.name}.`)
     };
@@ -143,10 +141,9 @@ client.on(Events.InteractionCreate, async interaction => {
 		const interactionMessage = await interaction.fetchReply();
 		//console.log(interactionMessage.content);
 		if (interactionMessage.content !== "Mais, vous savez, moi je ne crois pas qu'il y ait de bonne ou de mauvaise situation. Moi, si je devais résumer ma vie aujourd'hui avec vous, je dirais que c'est d'abord des rencontres, des gens qui m'ont tendu la main, peut-être à un moment où je ne pouvais pas, où j'étais seul chez moi. Et c'est assez curieux de se dire que les hasards, les rencontres forgent une destinée... Parce que quand on a le goût de la chose quand on a le goût de la chose bien faite, le beau geste, parfois on ne trouve pas l'interlocuteur en face, je dirais, le miroir qui vous aide à avancer. Alors ce n'est pas mon cas, comme je le disais là, puisque moi au contraire, j'ai pu ; et je dis merci à la vie, je lui dis merci, je chante la vie, je danse la vie... Je ne suis qu'amour ! Et finalement, quand beaucoup de gens aujourd'hui me disent « Mais comment fais-tu pour avoir cette humanité ? », eh ben je leur réponds très simplement, je leur dis que c'est ce goût de l'amour, ce goût donc qui m'a poussé aujourd'hui à entreprendre une construction mécanique, mais demain, qui sait, peut-être seulement à me mettre au service de la communauté, à faire le don, le don de soi...") {
-			speak = true
-			synthesizeSpeech(interactionMessage.content.replace('/',' slash ').replace('/',' slash ').replace('Low-Fuel','LowFuel').replace('-',' tiret ').replace('-',' tiret '), Marv_channel, speak)
+			synthesizeSpeech(interactionMessage.content.replace('/',' slash ').replace('/',' slash ').replace('Low-Fuel','LowFuel').replace('-',' tiret ').replace('-',' tiret '), Marv_channel)
 		} else {
-			PlayMP3('./monologue.mp3', speak)
+			PlayMP3('monologue.mp3')
 		}
 	}
 });
@@ -246,28 +243,82 @@ Utilisez les dernières avancées de l'IA pour créer un bot qui peut apprendre 
 
 const player = createAudioPlayer();
 
-function PlayMP3(resource, speak) {
-	const voiceChannel = client.channels.cache.get('1039788045441978371');
+// Ajoutez cettes variables en dehors de la fonction PlayMP3
+let queue = [];
+let isPlaying = false;
+
+function PlayMP3(resource) {
+    console.log(resource);
+
+    // Ajoutez la ressource à la file d'attente
+    queue.push(resource);
+
+    // Si une lecture est en cours, ne faites rien d'autre
+    if (isPlaying) return;
+
+    playNextResource();
+
+    function playNextResource() {
+        if (queue.length === 0) {
+            isPlaying = false;
+            return;
+        }
+
+        isPlaying = true;
+
+        const voiceChannel = client.channels.cache.get('1039788045441978371');
         const connection = joinVoiceChannel({
-        	channelId: voiceChannel.id,
-                guildId: voiceChannel.guild.id,
-                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-	        selfDeaf: false,
+            channelId: voiceChannel.id,
+            guildId: voiceChannel.guild.id,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            selfDeaf: false,
         });
         connection.subscribe(player);
         console.log("Listener Is Joining Voice And Listening...");
-	audio_resource = createAudioResource(resource);
-	console.log('lancement de la lecture');
-	player.play(audio_resource);
+        audio_resource = createAudioResource(queue[0]);
+        console.log('lancement de la lecture');
+        player.play(audio_resource);
 
-	connection.on("stateChange", (oldState, newState) => {
-      		if (
-         		oldState.status === VoiceConnectionStatus.Ready &&
-          		newState.status === VoiceConnectionStatus.Connecting
-      		) {
-          		connection.configureNetworking();
-      		}
-    	});
+        connection.on("stateChange", (oldState, newState) => {
+            if (
+                oldState.status === VoiceConnectionStatus.Ready &&
+                newState.status === VoiceConnectionStatus.Connecting
+            ) {
+                connection.configureNetworking();
+            }
+        });
+
+        // Modifiez cet événement pour détecter lorsque la lecture est terminée
+		player.on('stateChange', (oldState, newState) => {
+			console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
+			if (
+				oldState.status === "playing" &&
+				newState.status === "idle"
+			) {
+				isPlaying = false;
+				// Ne quittez pas le salon vocal
+				console.log("Playback finished.");
+				let mp3File = queue.shift();
+				if (mp3File !== "monologue.mp3") {
+					exists(number + 'output.mp3', function (doesExist) {
+						if (doesExist) {
+							console.log('le fichier ' + number + 'output.mp3 existe');
+							let mp3FileHere = number + "output.mp3";
+							fs.unlink(path.join(__dirname, mp3FileHere), (err) => {
+							if (err) throw err;
+								console.log("File deleted!");
+							});
+						} else {
+							console.log('le fichier n\'existe pas');
+						}
+					});
+				}
+				
+				// Ajoutez un délai de 1 seconde (1000 ms) avant de passer à la ressource suivante
+				setTimeout(playNextResource, 1000);
+			}
+		});
+    }
 }
 
 player.addListener("stateChange", (oldOne, newOne) => {
@@ -278,29 +329,13 @@ player.addListener("stateChange", (oldOne, newOne) => {
 player.addListener("stateChange", (oldOne, newOne) => {
 	console.log(newOne.status)
 	if (newOne.status === "idle") {
-		console.log('Fichier entièrement lu');
-		//channel = client.channels.cache.find(channel => channel.id === '1079588443929190420')
-               	//channel.send('<@1058811530092748871>')
-		exists('output.mp3', function (doesExist) {
-			if (doesExist) {
-				console.log('le fichier existe');
-				fs.unlink("output.mp3", (err) => {
-				if (err) throw err;
-					console.log("File deleted!");
-				});
-			} else {
-				console.log('le fichier n\'existe pas');
-			}
-		});
-		speak = false
-		addSpeechEvent.shouldProcessSpeech = !speak
-		return speak 
+		addSpeechEvent.shouldProcessSpeech = true;
+		return;
 	}
 });
 
-
-async function synthesizeSpeech(text, Marv_channel, speak) {
-	if (!speak) return
+let number = -1;
+async function synthesizeSpeech(text, Marv_channel) {
 	
 	text = text.replace('\n', '. ')
 
@@ -315,15 +350,15 @@ async function synthesizeSpeech(text, Marv_channel, speak) {
 		// select the type of audio encoding
 		audioConfig: {audioEncoding: 'MP3'},
 	};
-
+	number++;
 	// Performs the text-to-speech request
 	const [response] = await tts.synthesizeSpeech(request);
 	// Write the binary audio content to a local file
 	const writeFile = util.promisify(fs.writeFile);
-	await writeFile('output.mp3', response.audioContent, 'binary')
+	await writeFile(number + 'output.mp3', response.audioContent, 'binary')
 	.then(_ => { 
-		console.log('Audio content written to file: output.mp3'); 
-		if (Marv_channel !== '1079588443929190420') PlayMP3('output.mp3', speak);
+		console.log('Audio content written to file: ' + number + 'output.mp3'); 
+		if (Marv_channel !== '1079588443929190420') PlayMP3(number + 'output.mp3');
 	});
 }
 
@@ -337,64 +372,7 @@ function escapeHtml(text) {
 		.replace(/ /g, "+");
 }
 
-async function searchGoogle(query) {
-	const apiKey = GOOGLE_KEY_FOR_SEARCH;
-	const searchEngineId = CX;
-
-	const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${escapeHtml(searchEngineId)}&q=${query}`;
-	
-	return fetch(url)
-		.then(response => response.json())
-		.then(data => {
-			const result = data.items;
-			const links = result.map(item => item.snippet);
-			return links.slice(0, 6);
-		})
-		.catch(error => console.error(error));
-}
-
-const convert = compile({
-	preserveNewlines: false,
-	wordwrap: false,
-	// The main content of a website will typically be found in the main element
-	baseElements: { selectors: ["main"] },
-	selectors: [
-	  {
-		selector: "a",
-		options: { ignoreHref: true },
-	  },
-	],
-});
-
-/*async function getVisibleTextFromLink(link) {
-    try {
-		const response = await axios.get(link);
-
-		if (response.status === 200 && !link.endsWith('pdf') && !link.endsWith('exe') && !link.endsWith('msi')) {
-		  const $ = cheerio.load(response.data);
-		  const bodyHtml = $('body').html();
-		  bodyHtml = convert(bodyHtml);
-		  const sanitizedHtml = sanitizeHtml(bodyHtml.replace(/(\r\n|\n|\r)/gm, ""), {
-			allowedTags: [],
-			allowedAttributes: {},
-			exclusiveFilter: (frame) => {
-			  return frame.tag === 'script' || frame.tag === 'style' || frame.tag === 'link' && frame.attribs.rel === 'stylesheet';
-			},
-		  });
-		  console.log('sanitized : ' + sanitizedHtml)
-		  const bodyText = $(sanitizedHtml).text();
-		  const visibleText = bodyText.substring(0, 150).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");;
-		  return visibleText;
-		}
-    } catch (error) {
-        console.error(`Erreur lors de la récupération du contenu pour ${link}: ${error.message}`);
-    }
-}*/
-
-
-async function Marv(msg, speak) {
-	console.log('Marv is speak : ' + speak)
-	if (!speak) return
+async function Marv(msg) {
 	let msg_filtre = msg.content?.split('<@')
 	let msgFinal = '@' + msg.author?.username + ' : ' + msg_filtre[0];
 	for(let msgUsers of msg_filtre ) {
@@ -425,27 +403,13 @@ async function Marv(msg, speak) {
 
 		let text = '';
 		
-		try {
-			let snippets = await searchGoogle(question);
-	
-			for (let i = 0; i < snippets.length; i++) { //links.length; i++) {
-				let snippet = snippets[i];
-				text = text + ' ' + snippet; //await getVisibleTextFromLink(link);
-			}
-			webrequest = text.substring(0, 500);
-		} catch (error) {
-			console.error(`Erreur lors du traitement de la requête: ${error.message}`);
-		}
-
-		console.log(webrequest)
-
 		/*const gptResponse = await openai.createChatCompletion({
 			model: "gpt-3.5-turbo",
 			messages: [{ role: "system", content: personality }, { role: "user", content: question }],
 		});*/
 		const gptResponse = await openai.createChatCompletion({
-			model: "gpt-4",
-			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "assistant", content: JSON.stringify(webrequest) }, {role: "user", content: question }]
+			model: "gpt-3.5-turbo",
+			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "user", content: question }]
 		});
 
 		laReponse = gptResponse.data.choices[0].message.content;
@@ -460,9 +424,9 @@ async function Marv(msg, speak) {
 		await msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
 
 		if (laReponse.length >= 6000) {
-			await synthesizeSpeech('Votre message étant particulièrement long, je vous invite a allez voir dans le salon dédié', Marv_channel, speak);
+			await synthesizeSpeech('Votre message étant particulièrement long, je vous invite a allez voir dans le salon dédié', Marv_channel);
 		} else {
-			await synthesizeSpeech(laReponse.replace('Marv :', '').replace('Marv:', '').replace('Marc', 'Marv'), Marv_channel, speak);
+			await synthesizeSpeech(laReponse.replace('Marv :', '').replace('Marv:', '').replace('Marc', 'Marv'), Marv_channel);
 		}
 		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
@@ -503,9 +467,8 @@ client.on("messageCreate", async (msg) => {
 		botisConnected = true
 	}
 
-	speak = true
-	addSpeechEvent.shouldProcessSpeechm = !speak ;
-	if (msg.content !== undefined && msg.content.includes('<@1058811530092748871>') && msg.content !== '<@1058811530092748871>' ) Marv(msg, speak)
+	addSpeechEvent.shouldProcessSpeechm = false;
+	if (msg.content !== undefined && msg.content.includes('<@1058811530092748871>') && msg.content !== '<@1058811530092748871>' ) Marv(msg)
 });
 
 client.login(token);
