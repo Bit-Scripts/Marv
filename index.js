@@ -263,6 +263,7 @@ function PlayMP3(resource) {
     function playNextResource() {
 		speak = true;
         if (queue.length === 0) {
+			Bash.$`rm *output.mp3`;
             isPlaying = false;
             return;
         }
@@ -330,13 +331,8 @@ player.addListener("stateChange", (oldOne, newOne) => {
 
 player.addListener("stateChange", async (oldOne, newOne) => {
 	console.log(newOne.status)
-	if (newOne.status === "idle") {
-		if (queue.length() <= 1) {
-			Bash.$`rm *output.mp3`;
-		}
-		addSpeechEvent.shouldProcessSpeech = true;
-		return;
-	}
+	addSpeechEvent.shouldProcessSpeech = true;
+	return;
 });
 
 let number = -1;
