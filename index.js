@@ -263,7 +263,11 @@ function PlayMP3(resource) {
     function playNextResource() {
 		speak = true;
         if (queue.length === 0) {
-			Bash.$`rm *output.mp3`;
+			Bash.$`
+			FILE=*output/mp3
+			if [ -f "$FILE" ]; then
+				rm *output.mp3
+			fi`;
             isPlaying = false;
             return;
         }
