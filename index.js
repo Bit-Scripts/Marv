@@ -446,7 +446,7 @@ client.on("speech", (msg) => {
 	// If bot didn't recognize speech, content will be empty
 	if (!msg.content) return;
 
-	let msgToLowerCase = msg.toLowerCase();
+	let msgToLowerCase = msg.toString().toLowerCase();
 
 	if (msgToLowerCase.includes('arrêt')) {
 		console.log("Arrêt demandé");
