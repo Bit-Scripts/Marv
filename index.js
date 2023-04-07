@@ -451,6 +451,7 @@ client.on("speech", (msg) => {
 	if (msgToLowerCase.includes('arrêt')) {
 		console.log("Arrêt demandé");
 		stop();
+		return;
 	}
 
 	message = msg.content
