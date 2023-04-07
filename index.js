@@ -263,11 +263,6 @@ function PlayMP3(resource) {
     function playNextResource() {
 		speak = true;
         if (queue.length === 0) {
-			Bash.$`
-			FILE=*output/mp3
-			if [ -f "$FILE" ]; then
-				rm *output.mp3
-			fi`;
             isPlaying = false;
             return;
         }
@@ -325,6 +320,21 @@ function PlayMP3(resource) {
 				}
 			}
 		});
+    }
+}
+
+// Ajoutez cette fonction pour arrêter la lecture en cours
+function stop() {
+    if (isPlaying) {
+        player.stop(true);
+        queue = []; // Videz la file d'attente
+		Bash.$`
+		FILE=*output/mp3
+		if [ -f "$FILE" ]; then
+			rm *output.mp3
+		fi`;
+		numberMessage = 0;
+        console.log("Playback stopped and queue cleared.");
     }
 }
 
@@ -434,6 +444,12 @@ message = ''
 client.on("speech", (msg) => {
 	// If bot didn't recognize speech, content will be empty
 	if (!msg.content) return;
+
+	if (msg.toLowerCase().content === "arrête") {
+		console.log("Arrêt demandé");
+		stop();
+	}
+
 	message = msg.content
 	marvChannel = client.channels.cache.get('1079588443929190420');
 	marvChannel.send('<@1058811530092748871> ' + msg.author.username + ' ' + message.replace('Marc', 'Marv'))
