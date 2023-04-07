@@ -26,6 +26,7 @@ const sanitizeHtml = require('sanitize-html');
 const { compile } = require("html-to-text");
 const {  } = require('discord.js');
 const { setTimeout } = require('node:timers/promises');
+const { Bash } = require('node-bash');
 
 
 /*addSpeechEvent(client, {
@@ -323,13 +324,16 @@ function PlayMP3(resource) {
 }
 
 player.addListener("stateChange", (oldOne, newOne) => {
-	if (newOne.status === "autopaused") setTimeout(() => player.unpause(), 5_000);
+	if (newOne.status === "autopaused") setTimeout(() => player.unpause(), 2000);
 });
 
 
-player.addListener("stateChange", (oldOne, newOne) => {
+player.addListener("stateChange", async (oldOne, newOne) => {
 	console.log(newOne.status)
 	if (newOne.status === "idle") {
+		if (queue.length() <= 1) {
+			Bash.$`rm *output.mp3`;
+		}
 		addSpeechEvent.shouldProcessSpeech = true;
 		return;
 	}
