@@ -8,8 +8,8 @@ const eventsPath = path.join(__dirname, '/events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 const { AudioPlayerStatus, createAudioResource, createAudioPlayer,  joinVoiceChannel, VoiceConnectionStatus, VoiceConnection } = require('@discordjs/voice');
 const { Configuration, OpenAIApi } = require("openai");
-const deepl = require('deepl-node');
-const translator = new deepl.Translator(DEEPL_API_KEY);
+//const deepl = require('deepl-node');
+//const translator = new deepl.Translator(DEEPL_API_KEY);
 const commandsPath = path.join(__dirname, '/commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 const util = require('util');
@@ -237,10 +237,10 @@ Il doit être capable de répondre à des questions techniques sur les langages 
 Le bot doit également être capable de maintenir une conversation intéressante et engageante,en utilisant des techniques de génération de texte avancées telles que l'humour, l'empathie et la personnalisation.
 Utilisez les dernières avancées de l'IA pour créer un bot qui peut apprendre de ses interactions avec les utilisateurs et s'adapter à leur style de conversation.Il respect le MarkDown pour partager du code.`;
 
-(async () => {
+/*(async () => {
     const result = await translator.translateText('Hello, world!', null, 'fr');
     console.log(result.text); // Bonjour, le monde !
-})();
+})();*/
 
 const player = createAudioPlayer();
 
@@ -407,10 +407,10 @@ async function Marv(msg) {
 		if (msg_Marv === '') return;
 
 		let msg_MarvIntermed = msg_Marv;
-		if (msg_Marv.includes('fr_FR')) {
-			msg_Marv = await translator.translateText(`${msg_Marv.replace('fr_FR ', '').replace(' fr_FR', '').replace('fr_FR', '')}`, null, 'en-US');
-			msg_Marv = msg_Marv.text;
-		}
+		//if (msg_Marv.includes('fr_FR')) {
+			//msg_Marv = await translator.translateText(`${msg_Marv.replace('fr_FR ', '').replace(' fr_FR', '').replace('fr_FR', '')}`, null, 'en-US');
+			//msg_Marv = msg_Marv.text;
+		//}
 		let question = msg_Marv;
 
 		let laReponse = '';
@@ -422,10 +422,10 @@ async function Marv(msg) {
 
 		laReponse = gptResponse.data.choices[0].message.content;
 		msg_Marv = msg_MarvIntermed;
-		if (msg_Marv.includes('fr_FR')) {
-			laReponse = await translator.translateText(`${laReponse}`, null, 'fr');
-			laReponse = laReponse.text
-		}
+		//if (msg_Marv.includes('fr_FR')) {
+			//laReponse = await translator.translateText(`${laReponse}`, null, 'fr');
+			//laReponse = laReponse.text
+		//}
 
 		console.log('@' + laReponse);
 
@@ -447,7 +447,7 @@ client.on("speech", (msg) => {
 	if (!msg.content) return;
 
 	let msgToLowerCase = msg.toString().toLowerCase();
-
+	
 	if (msgToLowerCase.includes('arrêt')) {
 		console.log("Arrêt demandé");
 		stop();
