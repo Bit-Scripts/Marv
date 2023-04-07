@@ -329,10 +329,11 @@ function stop() {
         player.stop(true);
         queue = []; // Videz la file d'attente
 		Bash.$`
-		FILE=*output/mp3
+		FILE=*output.mp3
 		if [ -f "$FILE" ]; then
 			rm *output.mp3
-		fi`;
+		fi
+		`;
 		numberMessage = 0;
         console.log("Playback stopped and queue cleared.");
     }
@@ -445,7 +446,7 @@ client.on("speech", (msg) => {
 	// If bot didn't recognize speech, content will be empty
 	if (!msg.content) return;
 
-	if (msg.split(" ").toLowerCase().includes("arrêt")) {
+	if (msg.toLowerCase().includes('arrêt')) {
 		console.log("Arrêt demandé");
 		stop();
 	}
