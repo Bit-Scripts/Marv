@@ -325,6 +325,7 @@ function PlayMP3(resource) {
 
 // Ajoutez cette fonction pour arrêter la lecture en cours
 function stop() {
+	console.log("entrer dans la function d'arrêt")
 	player.stop(true);
 	queue = []; // Videz la file d'attente
 	Bash.$`
