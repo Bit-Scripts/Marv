@@ -325,18 +325,16 @@ function PlayMP3(resource) {
 
 // Ajoutez cette fonction pour arrêter la lecture en cours
 function stop() {
-    if (isPlaying) {
-        player.stop(true);
-        queue = []; // Videz la file d'attente
-		Bash.$`
-		FILE=*output.mp3
-		if [ -f "$FILE" ]; then
-			rm *output.mp3
-		fi
-		`;
-		numberMessage = 0;
-        console.log("Playback stopped and queue cleared.");
-    }
+	player.stop(true);
+	queue = []; // Videz la file d'attente
+	Bash.$`
+	FILE=*output.mp3
+	if [ -f "$FILE" ]; then
+		rm *output.mp3
+	fi
+	`;
+	numberMessage = 0;
+	console.log("Playback stopped and queue cleared.");
 }
 
 player.addListener("stateChange", (oldOne, newOne) => {
