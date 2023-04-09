@@ -29,6 +29,7 @@
     "fs": "^0.0.1-security",
     "getusermedia": "^2.0.1",
     "github-release-stats": "^1.0.2",
+    "glob": "^9.3.4",
     "google-auth-library": "^8.7.0",
     "google-tts-api": "^2.0.2",
     "html-to-text": "^9.0.4",
