@@ -1,5 +1,6 @@
 const { token, OPENAI_API_KEY, DEEPL_API_KEY, GCkey, organization, GOOGLE_KEY_FOR_SEARCH, CX } = require('./config.json');
 const fs = require("fs");
+const glob = require('glob');
 const { Client, Collection, GatewayIntentBits, ActivityType, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates] });
 const path = require('path');
@@ -26,7 +27,6 @@ const sanitizeHtml = require('sanitize-html');
 const { compile } = require("html-to-text");
 const {  } = require('discord.js');
 const { setTimeout } = require('node:timers/promises');
-const { Bash } = require('node-bash');
 
 
 /*addSpeechEvent(client, {
@@ -328,12 +328,29 @@ function stop() {
 	console.log("entrer dans la function d'arrêt")
 	player.stop(true);
 	queue = []; // Videz la file d'attente
-	Bash.$`
-	FILE=*output.mp3
-	if [ -f "$FILE" ]; then
-		rm *output.mp3
-	fi
-	`;
+	
+	// Spécifiez le répertoire cible et le modèle à utiliser
+	const targetDir = './';
+	const pattern = '*output.mp3';
+
+	// Recherchez tous les fichiers qui correspondent au modèle
+	glob(pattern, { cwd: targetDir }, (err, files) => {
+		if (err) {
+			console.log(err);
+			return;
+		}
+
+		// Pour chaque fichier trouvé, supprimez-le
+		files.forEach(file => {
+			fs.unlink(`${targetDir}/${file}`, err => {
+			if (err) {
+				console.log(err);
+			} else {
+				console.log(`Le fichier ${file} a été supprimé`);
+			}
+			});
+		});
+	});
 	numberMessage = 0;
 	console.log("Playback stopped and queue cleared.");
 }
