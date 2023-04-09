@@ -447,7 +447,7 @@ client.on("speech", (msg) => {
 
 	let msgToLowerCase = msg.toString().toLowerCase();
 	
-	if (msgToLowerCase.includes('arrête toi')) {
+	if (msgToLowerCase.includes('arrête-toi')) {
 		console.log("Arrêt demandé");
 		stop();
 		return;
