@@ -27,7 +27,7 @@ const sanitizeHtml = require('sanitize-html');
 const { compile } = require("html-to-text");
 const {  } = require('discord.js');
 const { setTimeout } = require('node:timers/promises');
-
+let number = -1;
 
 /*addSpeechEvent(client, {
 	key: GCkey,
@@ -351,8 +351,9 @@ function stop() {
 			});
 		});
 	});
-	number = 0;
+	number = -1;
 	console.log("Playback stopped and queue cleared.");
+	return number;
 }
 
 player.addListener("stateChange", (oldOne, newOne) => {
@@ -366,7 +367,6 @@ player.addListener("stateChange", async (oldOne, newOne) => {
 	return;
 });
 
-let number = -1;
 async function synthesizeSpeech(text, Marv_channel) {
 	
 	text = text.replace('\n', '. ')
@@ -391,6 +391,7 @@ async function synthesizeSpeech(text, Marv_channel) {
 	.then(_ => { 
 		console.log('Audio content written to file: ' + number + 'output.mp3'); 
 		if (Marv_channel !== '1079588443929190420') PlayMP3(number + 'output.mp3');
+		return number;
 	});
 }
 
