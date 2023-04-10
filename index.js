@@ -353,7 +353,6 @@ function stop() {
 	});
 	number = -1;
 	console.log("Playback stopped and queue cleared.");
-	return number;
 }
 
 player.addListener("stateChange", (oldOne, newOne) => {
@@ -391,7 +390,6 @@ async function synthesizeSpeech(text, Marv_channel) {
 	.then(_ => { 
 		console.log('Audio content written to file: ' + number + 'output.mp3'); 
 		if (Marv_channel !== '1079588443929190420') PlayMP3(number + 'output.mp3');
-		return number;
 	});
 }
 
