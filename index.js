@@ -351,7 +351,7 @@ function stop() {
 			});
 		});
 	});
-	numberMessage = 0;
+	number = 0;
 	console.log("Playback stopped and queue cleared.");
 }
 
