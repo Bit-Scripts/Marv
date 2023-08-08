@@ -25,10 +25,23 @@ const cheerio = require('cheerio');
 const axios = require('axios');
 const sanitizeHtml = require('sanitize-html');
 const { compile } = require("html-to-text");
-const {  } = require('discord.js');
 const { setTimeout } = require('node:timers/promises');
 let number = -1;
-
+const { Manager } = require("lavacord");
+const nodes = [
+    { id: "1", host: "localhost", port: 2333, password: "paullux_waffle" }
+];
+const manager = new Manager(nodes, {
+    user: '1058811530092748871',
+    send: (packet) => {
+        // this needs to send the provided packet to discord using the method from your library. use the @lavacord package for the discord library you use if you don't understand this
+    }
+});
+manager.connect();
+manager.on("error", (error, node) => {
+    error,
+    node
+});
 /*addSpeechEvent(client, {
 	key: GCkey,
 	lang: 'fr-FR',
@@ -456,8 +469,27 @@ async function Marv(msg) {
 		historic = question + "\n" + laReponse;
 	}
 }
+
+const music = async (msg) => {
+
+	const player = manager.join({
+		guild: '1039788044691181608', // Guild id
+		channel: '1079588443929190420', // Channel id
+		node: "1" // lavalink node id, based on array of nodes
+	});
+
+	getSongs("ytsearch:"+msg.content.toString()).then(async songs => {
+		await player.play(track);
+	});
+	
+	player.once("error", error => console.error(error));
+	player.once("end", data => {
+		if (data.reason === "REPLACED") return;
+	});
+}
+
 message = ''
-client.on("speech", (msg) => {
+client.on("speech", async(msg) => {
 	// If bot didn't recognize speech, content will be empty
 	if (!msg.content) return;
 
@@ -470,8 +502,14 @@ client.on("speech", (msg) => {
 	}
 
 	message = msg.content
+
 	marvChannel = client.channels.cache.get('1079588443929190420');
 	marvChannel.send('<@1058811530092748871> ' + msg.author.username + ' ' + message.replace('Marc', 'Marv'))
+
+	if (msgToLowerCase.startsWith('Musique')) {
+		music(msg);
+		return;
+	}
 
 	console.log(msg.author.username + ' ' + message?.replace('Marc', 'Marv'))
 	//Marv(msg)
