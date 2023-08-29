@@ -1,4 +1,4 @@
-const { token, OPENAI_API_KEY, DEEPL_API_KEY, GCkey, organization, GOOGLE_KEY_FOR_SEARCH, CX } = require('./config.json');
+const { token, OPENAI_API_KEY, DEEPL_API_KEY, GCkey, organization, GOOGLE_KEY_FOR_SEARCH, CX, portMusic, password } = require('./config.json');
 const fs = require("fs");
 const glob = require('glob');
 const { Client, Collection, GatewayIntentBits, ActivityType, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
@@ -29,7 +29,7 @@ const { setTimeout } = require('node:timers/promises');
 let number = -1;
 const { Manager } = require("lavacord");
 const nodes = [
-    { id: "1", host: "localhost", port: 2333, password: "paullux_waffle" }
+    { id: "1", host: "localhost", port: portMusic, password: password }
 ];
 const manager = new Manager(nodes, {
     user: '1058811530092748871',

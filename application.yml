@@ -1,5 +1,5 @@
 server: # REST and WS server
-  port: 2333
+  port: 
   address: localhost
 plugins:
 #  name: # Name of the plugin
@@ -10,7 +10,7 @@ lavalink:
 #    - dependency: "group:artifact:version"
 #      repository: "repository"
   server:
-    password: "paullux_waffle"
+    password: "turlututu_chapeau_pointu"
     sources:
       youtube: true
       bandcamp: true
