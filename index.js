@@ -27,21 +27,21 @@ const sanitizeHtml = require('sanitize-html');
 const { compile } = require("html-to-text");
 const { setTimeout } = require('node:timers/promises');
 let number = -1;
-const { Manager } = require("lavacord");
-const nodes = [
-    { id: "1", host: "localhost", port: portMusic, password: password }
-];
-const manager = new Manager(nodes, {
-    user: '1058811530092748871',
-    send: (packet) => {
-        // this needs to send the provided packet to discord using the method from your library. use the @lavacord package for the discord library you use if you don't understand this
-    }
-});
-manager.connect();
-manager.on("error", (error, node) => {
-    error,
-    node
-});
+// const { Manager } = require("lavacord");
+// const nodes = [
+//     { id: "1", host: "localhost", port: portMusic, password: password }
+// ];
+// const manager = new Manager(nodes, {
+//     user: '1058811530092748871',
+//     send: (packet) => {
+//         // this needs to send the provided packet to discord using the method from your library. use the @lavacord package for the discord library you use if you don't understand this
+//     }
+// });
+// manager.connect();
+// manager.on("error", (error, node) => {
+//     error,
+//     node
+// });
 /*addSpeechEvent(client, {
 	key: GCkey,
 	lang: 'fr-FR',
