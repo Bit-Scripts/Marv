@@ -1,4 +1,4 @@
-const { token, OPENAI_API_KEY, DEEPL_API_KEY, GCkey, organization, GOOGLE_KEY_FOR_SEARCH, CX, portMusic, password } = require('./config.json');
+const { token, clientId, guildId, BOT_TOKEN, OPENAI_API_KEY, DEEPL_API_KEY, GCkey, organization, GOOGLE_KEY_FOR_SEARCH, CX, portMusic, password, idMarv, TalkToMarvVoiceChannel, TalkToMarvTXTChannel, MarvAdminChannel, AboutMarvChannel } = require('./config.json');
 const fs = require("fs");
 const glob = require('glob');
 const { Client, Collection, GatewayIntentBits, ActivityType, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
@@ -58,12 +58,12 @@ addSpeechEvent(client, {
 addSpeechEvent.shouldProcessSpeech = true
 //addSpeechEvent(client, { key: 'WITAIKEY' });
 
-Marv_channel = client.channels.cache.find(channel => channel.id === '1077629023577976902')
+Marv_channel = client.channels.cache.find(channel => channel.id === AboutMarvChannel)
 
 client.once("ready", () => {
 	console.log(`${client.user.tag} loading to Voice!`);
-	let channel = client.channels.cache.find(channel => channel.id === '1079588443929190420')
-	channel.send('<@1058811530092748871>')
+	let channel = client.channels.cache.find(channel => channel.id === TalkToMarvTXTChannel)
+	channel.send(idMarv)
 })
 
 /*client.once('speech', (msg) => {
@@ -282,7 +282,7 @@ function PlayMP3(resource) {
 
         isPlaying = true;
 
-        const voiceChannel = client.channels.cache.get('1039788045441978371');
+        const voiceChannel = client.channels.cache.get(TalkToMarvVoiceChannel);
         const connection = joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId: voiceChannel.guild.id,
@@ -402,7 +402,7 @@ async function synthesizeSpeech(text, Marv_channel) {
 	await writeFile(number + 'output.mp3', response.audioContent, 'binary')
 	.then(_ => { 
 		console.log('Audio content written to file: ' + number + 'output.mp3'); 
-		if (Marv_channel !== '1079588443929190420') PlayMP3(number + 'output.mp3');
+		if (Marv_channel !== TalkToMarvTXTChannel) PlayMP3(number + 'output.mp3');
 	});
 }
 
@@ -457,7 +457,8 @@ async function Marv(msg) {
 
 		console.log('@' + laReponse);
 
-		await msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
+		//await msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
+		await sendLongMessage(msg.channel, laReponse.replace('Marv :', '').replace('Marv:', ''));
 
 		if (laReponse.length >= 6000) {
 			await synthesizeSpeech('Votre message étant particulièrement long, je vous invite a allez voir dans le salon dédié', Marv_channel);
@@ -473,8 +474,8 @@ async function Marv(msg) {
 const music = async (msg) => {
 
 	const player = manager.join({
-		guild: '1039788044691181608', // Guild id
-		channel: '1079588443929190420', // Channel id
+		guild: guildId, // Guild id
+		channel: TalkToMarvVoiceChannel, // Channel id
 		node: "1" // lavalink node id, based on array of nodes
 	});
 
@@ -486,6 +487,45 @@ const music = async (msg) => {
 	player.once("end", data => {
 		if (data.reason === "REPLACED") return;
 	});
+}
+
+const MAX_MESSAGE_LENGTH = 2000;
+
+/**
+ * Découpe le message en plusieurs segments de moins de 2000 caractères.
+ * @param {string} content Le message à découper.
+ * @returns {Array<string>} La liste des segments.
+ */
+
+/**
+ * Envoyez un long message, le cas échéant, découpé en plusieurs parties.
+ * @param {import('discord.js').TextChannel} channel Le canal pour envoyer le message.
+ * @param {string} content Le contenu du message.
+ */
+async function sendLongMessage(channel, content) {
+    const segments = splitMessage(content);
+    for (const segment of segments) {
+        await channel.send(segment);
+    }
+}
+
+function splitMessage(content) {
+    const segments = [];
+    while (content.length > 0) {
+        let segmentSize = Math.min(MAX_MESSAGE_LENGTH, content.length);
+        let segment = content.substring(0, segmentSize);
+        // Si le segment coupe un mot en deux, retrouve la dernière espace et coupe à cet endroit
+        if (segmentSize < content.length && !/\s/.test(content[segmentSize])) {
+            let lastSpaceIndex = segment.lastIndexOf(' ');
+            if (lastSpaceIndex !== -1) {
+                segmentSize = lastSpaceIndex;
+                segment = content.substring(0, segmentSize);
+            }
+        }
+        segments.push(segment);
+        content = content.substring(segmentSize);
+    }
+    return segments;
 }
 
 message = ''
@@ -503,10 +543,10 @@ client.on("speech", async(msg) => {
 
 	message = msg.content
 
-	marvChannel = client.channels.cache.get('1079588443929190420');
-	marvChannel.send('<@1058811530092748871> ' + msg.author.username + ' ' + message.replace('Marc', 'Marv'))
+	marvChannel = client.channels.cache.get(TalkToMarvTXTChannel);
+	marvChannel.send(idMarv + ' ' + msg.author.username + ' ' + message.replace('Marc', 'Marv'))
 
-	if (msgToLowerCase.startsWith('Musique')) {
+	if (msgToLowerCase.startsWith('musique')) {
 		music(msg);
 		return;
 	}
@@ -523,8 +563,8 @@ client.on('voiceStateUpdate', (oldState, newState) => {
 })
 
 client.on("messageCreate", async (msg) => {
-	adminChannel = client.channels.cache.get('1064208603076108440');
-	const voiceChannel = client.channels.cache.get('1039788045441978371');
+	adminChannel = client.channels.cache.get(MarvAdminChannel);
+	const voiceChannel = client.channels.cache.get(TalkToMarvVoiceChannel);
 	if (!botisConnected && voiceChannel) {
 		const connection = joinVoiceChannel({
 			channelId: voiceChannel.id,
@@ -538,7 +578,7 @@ client.on("messageCreate", async (msg) => {
 	}
 
 	addSpeechEvent.shouldProcessSpeechm = false;
-	if (msg.content !== undefined && msg.content.includes('<@1058811530092748871>') && msg.content !== '<@1058811530092748871>' ) Marv(msg)
+	if (msg.content !== undefined && msg.content.includes(idMarv) && msg.content !== idMarv ) Marv(msg)
 });
 
 client.login(token);
