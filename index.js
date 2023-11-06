@@ -458,7 +458,8 @@ async function Marv(msg) {
 		console.log('@' + laReponse);
 
 		//await msg.channel.send(laReponse.replace('Marv :', '').replace('Marv:', ''))
-		await sendLongMessage(msg.channel, laReponse.replace('Marv :', '').replace('Marv:', ''));
+		await sendLongMessage(msg.channel, laReponse.toString().replaceAll('Marv :', ''));
+
 
 		if (laReponse.length >= 6000) {
 			await synthesizeSpeech('Votre message étant particulièrement long, je vous invite a allez voir dans le salon dédié', Marv_channel);
@@ -540,22 +541,22 @@ client.on("speech", async(msg) => {
 		stop();
 		return;
 	}
-
 	message = msg.content
+	console.log(message.replaceAll('Marc', 'Marv'));
+	if (message.toString().replaceAll('Marc', 'Marv').includes('Marv')) {
+		marvChannel = client.channels.cache.get(TalkToMarvTXTChannel);
+		marvChannel.send(idMarv + ' ' + msg.author.username + ' ' + message.toString().replaceAll('Marc', 'Marv'))
 
-	marvChannel = client.channels.cache.get(TalkToMarvTXTChannel);
-	marvChannel.send(idMarv + ' ' + msg.author.username + ' ' + message.replace('Marc', 'Marv'))
-
-	if (msgToLowerCase.startsWith('musique')) {
-		music(msg);
-		return;
+		if (msgToLowerCase.startsWith('musique')) {
+			music(msg);
+			return;
+		}
+		console.log(msg.author.username + ' ' + message?.toString().replace('Marc', 'Marv'))
+		//Marv(msg)
+		console.log(`${client.user.username} loading to Voice!`);
+		message = ''
+		return message
 	}
-
-	console.log(msg.author.username + ' ' + message?.replace('Marc', 'Marv'))
-	//Marv(msg)
-	console.log(`${client.user.username} loading to Voice!`);
-	message = ''
-	return message
 });
 
 client.on('voiceStateUpdate', (oldState, newState) => {
@@ -578,7 +579,7 @@ client.on("messageCreate", async (msg) => {
 	}
 
 	addSpeechEvent.shouldProcessSpeechm = false;
-	if (msg.content !== undefined && msg.content.includes(idMarv) && msg.content !== idMarv ) Marv(msg)
+	if (msg.content !== undefined && msg.content.includes(idMarv) && msg.content !== idMarv && msg.toString().replaceAll('Marc', 'Marv').includes('Marv') ) Marv(msg)
 });
 
 client.login(token);
