@@ -10,6 +10,7 @@
     "idMarv": "<@xxxxxxxxxxxxxxxxxxx>",
     "TalkToMarvVoiceChannel": "xxxxxxxxxxxxxxxxxxx",
     "TalkToMarvTXTChannel": "xxxxxxxxxxxxxxxxxxx",
+    "TalkToMarvAdminChannel": "xxxxxxxxxxxxxxxxxxx",
     "MarvAdminChannel": "xxxxxxxxxxxxxxxxxxx",
     "AboutMarvChannel": "xxxxxxxxxxxxxxxxxxx",
     "Help": {
@@ -24,6 +25,7 @@
 		"//idMarv": "//Id de Marv sous forme de version pingable",
 		"//TalkToMarvVoiceChannel": "//Id Salon vocal Pour Marv",
 		"//TalkToMarvTXTChannel": "//Id Salon texte Pour Marv",
+		"//TalkToMarvAdminChannel": "//Id Salon Admin texte Pour Marv",
 		"//MarvAdminChannel": "//Id Salon admin texte de Marv",
 		"//AboutMarvChannel": "//Id Salon texte qui parle à propos de Marv",
 		"//config-example.json": "//rename into config.json",

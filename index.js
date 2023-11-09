@@ -1,4 +1,4 @@
-const { token, clientId, guildId, BOT_TOKEN, OPENAI_API_KEY, DEEPL_API_KEY, GCkey, organization, GOOGLE_KEY_FOR_SEARCH, CX, portMusic, password, idMarv, TalkToMarvVoiceChannel, TalkToMarvTXTChannel, MarvAdminChannel, AboutMarvChannel } = require('./config.json');
+const { token, clientId, guildId, BOT_TOKEN, OPENAI_API_KEY, DEEPL_API_KEY, GCkey, organization, GOOGLE_KEY_FOR_SEARCH, CX, portMusic, password, idMarv, TalkToMarvVoiceChannel, TalkToMarvTXTChannel, TalkToMarvAdminChannel, MarvAdminChannel, AboutMarvChannel } = require('./config.json');
 const fs = require("fs");
 const glob = require('glob');
 const { Client, Collection, GatewayIntentBits, ActivityType, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
@@ -427,12 +427,13 @@ async function Marv(msg) {
 			msgFinal += msgUsers;
 		}
 	}
-	console.log(msgFinal);
 	adminChannel.send('-------------------------')
 	adminChannel.send(msgFinal);
-	if (typeof msgFinal === 'string' ? msgFinal.includes('@Marv') : false) {
-		let msg_Marv = msgFinal.replace('@Marv ', '').replace(' @Marv', '').replace('@Marv', '').replace('You', '');
+	console.log('avant filtre fonction Marv :', msgFinal);
+	if (typeof msgFinal === 'string' ? msgFinal.includes('@Marv') || msg.channel.id === TalkToMarvTXTChannel || msg.channel.id === TalkToMarvAdminChannel : false) {
+		let msg_Marv = msgFinal.toString().replaceAll('@Marv ', '').replace('You', '');
 		if (msg_Marv === '') return;
+		console.log('msg send to API :', msg_Marv);
 
 		let msg_MarvIntermed = msg_Marv;
 		//if (msg_Marv.includes('fr_FR')) {
@@ -464,7 +465,7 @@ async function Marv(msg) {
 		if (laReponse.length >= 6000) {
 			await synthesizeSpeech('Votre message étant particulièrement long, je vous invite a allez voir dans le salon dédié', Marv_channel);
 		} else {
-			await synthesizeSpeech(laReponse.replace('Marv :', '').replace('Marv:', '').replace('Marc', 'Marv'), Marv_channel);
+			await synthesizeSpeech(laReponse.toString().replaceAll('Marv :', '').replaceAll('`', '').replace('Marc', 'Marv'), Marv_channel);
 		}
 		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
@@ -541,11 +542,12 @@ client.on("speech", async(msg) => {
 		stop();
 		return;
 	}
+
 	message = msg.content
-	console.log(message.replaceAll('Marc', 'Marv'));
+	console.log('message speech :', message.replaceAll('Marc', 'Marv'));
 	if (message.toString().replaceAll('Marc', 'Marv').includes('Marv')) {
 		marvChannel = client.channels.cache.get(TalkToMarvTXTChannel);
-		marvChannel.send(idMarv + ' ' + msg.author.username + ' ' + message.toString().replaceAll('Marc', 'Marv'))
+		marvChannel.send(idMarv + ' : ' + msg.author.username + ' ' + message.toString().replaceAll('Marc', 'Marv'))
 
 		if (msgToLowerCase.startsWith('musique')) {
 			music(msg);
@@ -564,6 +566,7 @@ client.on('voiceStateUpdate', (oldState, newState) => {
 })
 
 client.on("messageCreate", async (msg) => {
+	console.log(msg.content);
 	adminChannel = client.channels.cache.get(MarvAdminChannel);
 	const voiceChannel = client.channels.cache.get(TalkToMarvVoiceChannel);
 	if (!botisConnected && voiceChannel) {
@@ -578,8 +581,18 @@ client.on("messageCreate", async (msg) => {
 		botisConnected = true
 	}
 
+	const msgIsNotNull = msg.content !== undefined;
+	const msgInNormalChannelWithOutPing = msg.channel.id === TalkToMarvTXTChannel && msg.author.username !== 'Marv';
+	const msgPingMarvFromVoice = msg.content.startsWith(idMarv) && msg.content.toLowerCase().includes('marv');
+	const msgAdminChannelToMarv = !msg.author.bot && msg.channel.id === TalkToMarvAdminChannel && msg.author.username !== 'Marv';
+	const msgPingMarvFromAllServer = msg.author.username !== 'Marv' && msg.content.includes(idMarv);
+	const msgEmpty = msg.content !== idMarv;
+	
 	addSpeechEvent.shouldProcessSpeechm = false;
-	if (msg.content !== undefined && msg.content.includes(idMarv) && msg.content !== idMarv && msg.toString().replaceAll('Marc', 'Marv').includes('Marv') ) Marv(msg)
+	if (msgIsNotNull && (msgInNormalChannelWithOutPing || msgPingMarvFromVoice || msgAdminChannelToMarv || msgPingMarvFromAllServer) && msgEmpty) {
+		console.log('new msg to marv :', msg.content)
+		Marv(msg)
+	}
 });
 
 client.login(token);

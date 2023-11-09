@@ -66,7 +66,8 @@ Pour utiliser Marv sur votre serveur Discord, vous devez compléter le fichier c
     "GOOGLE_APPLICATION_CREDENTIALS": " ./chemin/vers/votre/fichier-de-cle.json",
     "idMarv": "ID de Marv sous forme de mention pingable",
     "TalkToMarvVoiceChannel": "ID du salon vocal pour Marv",
-    "TalkToMarvTXTChannel": "ID du salon texte pour Marv",
+    "TalkToMarvTXTChannel": "ID du salon texte ouvert à tous pour Marv",
+    "TalkToMarvAdminChannel": "ID du salon texte Admin pour Marv",
     "MarvAdminChannel": "ID du salon texte administratif de Marv",
     "AboutMarvChannel": "ID du salon texte dédié à Marv"
 }
