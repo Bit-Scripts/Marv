@@ -46,6 +46,7 @@
     "node-fs": "^0.1.7",
     "node-path": "^0.0.3",
     "node-stream": "^1.7.0",
+    "node-summary": "^1.2.0",
     "octokit": "^2.1.0",
     "openai": "^3.3.0",
     "opus": "^0.0.0",
@@ -69,6 +70,7 @@
   "name": "bit-scripts-chatgpt",
   "version": "1.0.0",
   "main": "index.js",
+  
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

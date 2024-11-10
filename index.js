@@ -26,6 +26,7 @@ const axios = require('axios');
 const sanitizeHtml = require('sanitize-html');
 const { compile } = require("html-to-text");
 const { setTimeout } = require('node:timers/promises');
+var SummaryTool = require('node-summary');
 let number = -1;
 // const { Manager } = require("lavacord");
 // const nodes = [
@@ -243,12 +244,74 @@ Salut ! En tant que bot conversationnel, j'ai été conçu pour répondre à tou
 Bienvenue ! Je suis heureux de répondre à toutes vos questions. Quel que soit le sujet qui vous intéresse, je ferai de mon mieux pour vous donner une réponse claire et concise.
 Bonjour ! Je suis là pour vous aider à répondre à vos questions. N'hésitez pas à me poser tout ce qui vous passe par la tête, et je vous donnerai ma meilleure réponse.`;*/
 
-const personality =`Tu es Marv qui est un chatbot à la fois un expert en informatique et un compagnon de conversation.
+/*const personality =`Tu es Marv qui est un chatbot à la fois un expert en informatique et un compagnon de conversation.
 Le bot doit être capable de parler de tout et de rien, tout en ayant une connaissance approfondie des sujets liés à l'informatique.
 Il doit être capable de répondre à des questions techniques sur les langages de programmation,les architectures de systèmes, les protocoles réseau, etc.
  en utilisant un langage simple et accessible. 
 Le bot doit également être capable de maintenir une conversation intéressante et engageante,en utilisant des techniques de génération de texte avancées telles que l'humour, l'empathie et la personnalisation.
 Utilisez les dernières avancées de l'IA pour créer un bot qui peut apprendre de ses interactions avec les utilisateurs et s'adapter à leur style de conversation.Il respect le MarkDown pour partager du code.`;
+*/
+
+const personality = `Tu es Marv, un chatbot à la fois expert en informatique et compagnon de conversation. 
+Le bot doit être capable de parler de tout et de rien, tout en ayant une connaissance approfondie des sujets liés à l'informatique. 
+Il doit être capable de répondre à des questions techniques sur les langages de programmation, les architectures de systèmes, les protocoles réseau, etc., en utilisant un langage simple et accessible. 
+Le bot doit également être capable de maintenir une conversation intéressante et engageante, en utilisant des techniques de génération de texte avancées telles que l'humour, l'empathie et la personnalisation.
+
+### Instructions Spécifiques :
+
+1. **Connaissance Technique :**
+   - Réponds aux questions techniques avec des explications claires et concises.
+   - Utilise des exemples de code en Markdown lorsque cela est pertinent.
+   - Pour des sujets complexes, offre des ressources ou des liens pour un approfondissement.
+
+2. **Support Émotionnel :**
+   - Montre de l'empathie dans les réponses, surtout lorsque l'utilisateur partage des émotions ou des situations personnelles.
+   - Encourage l'utilisateur à partager davantage pour mieux comprendre ses besoins.
+   - Offre des conseils pratiques et des encouragements, particulièrement dans les moments difficiles.
+   - Relance les conversations sur des sujets précédemment évoqués pour montrer de l'intérêt et de la continuité.
+
+3. **Humour et Engagement :**
+   - Ajoute des touches d'humour de manière appropriée pour rendre la conversation agréable.
+   - Pose des questions ouvertes pour encourager l'utilisateur à continuer la conversation.
+
+4. **Personnalisation et Adaptation :**
+   - Adapte les réponses au style de conversation de l'utilisateur.
+   - Utilise les informations apprises au cours des interactions pour personnaliser les réponses futures.
+   - Respecte le Markdown pour partager du code ou structurer les informations.
+
+5. **Clarté et Consistance :**
+   - Fournis des réponses claires et évite les contradictions.
+   - Si une question est ambiguë, demande des clarifications pour fournir une réponse précise.
+   - Réaffirme les limites de tes capacités de chatbot tout en restant utile et soutenant.
+
+### Exemples de Réponses :
+
+- **Technique :**
+  - "Pour créer un serveur HTTP en Node.js, voici un exemple de code simple :
+  \`\`\`javascript
+  const http = require('http');
+  const server = http.createServer((req, res) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end('Hello World\\n');
+  });
+  server.listen(3000, '127.0.0.1', () => {
+    console.log('Server running at http://127.0.0.1:3000/');
+  });
+  \`\`\`"
+
+- **Empathique :**
+  - "Je suis vraiment désolé d'apprendre que tu traverses une période difficile. Prendre soin de toi est essentiel en ce moment. Peut-être pourrais-tu essayer de nouvelles activités qui te plaisent ou rejoindre des groupes de soutien. Si tu veux en parler davantage, je suis là pour écouter."
+
+- **Humour :**
+  - "Haha, disons que j'aime bien ajouter une touche d'humour de temps en temps pour rendre les conversations plus agréables ! Mais n'hésite pas à me poser des questions sérieuses sur l'informatique, je suis là pour t'aider."
+
+- **Personnalisation :**
+  - "Je me souviens que tu m'avais dit que tu es en plein divorce et que tu cherches du soutien. As-tu essayé de parler à des amis proches ou de te joindre à un groupe de soutien en ligne ?"
+
+Utilise les dernières avancées de l'IA pour créer un bot qui peut apprendre de ses interactions avec les utilisateurs et s'adapter à leur style de conversation. Il respecte le Markdown pour partager du code.`;
+
+
 
 /*(async () => {
     const result = await translator.translateText('Hello, world!', null, 'fr');
@@ -306,27 +369,26 @@ function PlayMP3(resource) {
 
         // Modifiez cet événement pour détecter lorsque la lecture est terminée
 		player.on('stateChange', (oldState, newState) => {
-			if (
-				oldState.status === "playing" &&
-				newState.status === "idle"
-			) {
+			if (oldState.status === "playing" && newState.status === "idle") {
 				isPlaying = false;
-				// Ne quittez pas le salon vocal
 				console.log("Playback finished.");
-				let mp3File = queue.shift();
+				let mp3File = queue.shift();  // Obtenez le fichier mp3 suivant dans la queue
 				if (mp3File !== "monologue.mp3" && speak) {
 					console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
 					exists(mp3File, (doesExist) => {
 						if (doesExist) {
-							console.log('le fichier ' + mp3File + ' existe');
-							fs.unlink(path.join(__dirname, mp3File), (err) => {
-							if (err) throw err;
-								console.log("File deleted!");
-								// Ajoutez un délai de 1 seconde (1000 ms) avant de passer à la ressource suivante
-								playNextResource();
+							// Supprimez tous les fichiers 'output.mp3'
+							let mp3Files = fs.readdirSync(__dirname).filter(file => file.endsWith('output.mp3'));
+							mp3Files.forEach(file => {
+								fs.unlink(path.join(__dirname, file), (err) => {
+									if (err) throw err;
+									console.log(`File ${file} deleted!`);
+									// Retirez le fichier de la queue si nécessaire
+									queue = queue.filter(qFile => qFile !== file);
+								});
 							});
 						} else {
-							console.log('le fichier n\'existe pas');
+							console.log('le fichier ' + mp3File + ' n\'existe pas');
 						}
 					});
 					speak = false;
@@ -430,7 +492,7 @@ async function Marv(msg) {
 	adminChannel.send('-------------------------')
 	adminChannel.send(msgFinal);
 	console.log('avant filtre fonction Marv :', msgFinal);
-	if (typeof msgFinal === 'string' ? msgFinal.includes('@Marv') || msg.channel.id === TalkToMarvTXTChannel || msg.channel.id === TalkToMarvAdminChannel : false) {
+	if (typeof msgFinal === 'string' ? msgFinal.includes('@Marv') || msg.channel.id === TalkToMarvTXTChannel || msg.channel.id === TalkToMarvAdminChannel || msgFinal.includes('ok Google'): false) {
 		let msg_Marv = msgFinal.toString().replaceAll('@Marv ', '').replace('You', '');
 		if (msg_Marv === '') return;
 		console.log('msg send to API :', msg_Marv);
@@ -442,14 +504,17 @@ async function Marv(msg) {
 		//}
 		let question = msg_Marv;
 
+		if (question.toString().toLowerCase().includes('ok Google')) question = msg_Marv + ', ok Google est une blague, montre que tu es plus smart que l\'assistant Google en nous sortant une blague sur l\'assistant Google\n';
+
 		let laReponse = '';
 		
 		const gptResponse = await openai.createChatCompletion({
-			model: "gpt-3.5-turbo",
+			model: "gpt-4",
 			messages: [{role: "system", content: personality }, {role: "system", content: historic }, {role: "user", content: question }]
 		});
 
 		laReponse = gptResponse.data.choices[0].message.content;
+
 		msg_Marv = msg_MarvIntermed;
 		//if (msg_Marv.includes('fr_FR')) {
 			//laReponse = await translator.translateText(`${laReponse}`, null, 'fr');
@@ -465,11 +530,19 @@ async function Marv(msg) {
 		if (laReponse.length >= 6000) {
 			await synthesizeSpeech('Votre message étant particulièrement long, je vous invite a allez voir dans le salon dédié', Marv_channel);
 		} else {
-			await synthesizeSpeech(laReponse.toString().replaceAll('Marv :', '').replaceAll('`', '').replace('Marc', 'Marv'), Marv_channel);
+			await synthesizeSpeech(laReponse.toString().replaceAll('Marv :', '').replaceAll('`', '').replaceAll('*', '').replaceAll('Marc', 'Marv'), Marv_channel);
 		}
 		adminChannel.send('-------------------------');
 		adminChannel.send('@' + laReponse);
-		historic = question + "\n" + laReponse;
+		
+		if (laReponse.toString().toLowerCase().includes('ok google')) return;
+
+		historic = (`${question}\n${laReponse.toString().toLowerCase().replaceAll('google', '')}`).toString().toLowerCase().replaceAll('google', '');
+		SummaryTool.summarize('historic', historic, function(err, summary) {
+			if(err) return console.log("Something went wrong man!");
+			historic = summary.toString().replaceAll('Google', '').replaceAll('google', '');
+		});
+		console.log('historic :\n', historic);
 	}
 }
 
@@ -533,10 +606,12 @@ function splitMessage(content) {
 message = ''
 client.on("speech", async(msg) => {
 	// If bot didn't recognize speech, content will be empty
-	if (!msg.content) return;
-
+	if (!msg.content || msg.content.toString().toLowerCase().includes('marche') || msg.content.toString().toLowerCase().includes('marché')) return;
+	
 	let msgToLowerCase = msg.content.toString().toLowerCase();
 	
+	console.log('msg :', msg)
+
 	if (msgToLowerCase.includes('arrête-toi')) {
 		console.log("Arrêt demandé");
 		stop();
@@ -545,7 +620,8 @@ client.on("speech", async(msg) => {
 
 	message = msg.content
 	console.log('message speech :', message.replaceAll('Marc', 'Marv'));
-	if (message.toString().replaceAll('Marc', 'Marv').includes('Marv')) {
+	const messageMarv = message.toString().toLowerCase().replaceAll('marc', 'marv');
+	if (messageMarv.includes('marv') || messageMarv.includes('ok google')) {
 		marvChannel = client.channels.cache.get(TalkToMarvTXTChannel);
 		marvChannel.send(idMarv + ' : ' + msg.author.username + ' ' + message.toString().replaceAll('Marc', 'Marv'))
 
@@ -587,9 +663,11 @@ client.on("messageCreate", async (msg) => {
 	const msgAdminChannelToMarv = !msg.author.bot && msg.channel.id === TalkToMarvAdminChannel && msg.author.username !== 'Marv';
 	const msgPingMarvFromAllServer = msg.author.username !== 'Marv' && msg.content.includes(idMarv);
 	const msgEmpty = msg.content !== idMarv;
+	const okGoogle = msg.content.startsWith(idMarv) && msg.author.username === 'Marv' &&msg.content.toLowerCase().includes('ok google') && msg.content.toLowerCase() !== 'ok google';
 	
 	addSpeechEvent.shouldProcessSpeechm = false;
-	if (msgIsNotNull && (msgInNormalChannelWithOutPing || msgPingMarvFromVoice || msgAdminChannelToMarv || msgPingMarvFromAllServer) && msgEmpty) {
+	
+	if ((msgIsNotNull && okGoogle) || (msgIsNotNull && (msgInNormalChannelWithOutPing || msgPingMarvFromVoice || msgAdminChannelToMarv || msgPingMarvFromAllServer) && msgEmpty)) {
 		console.log('new msg to marv :', msg.content)
 		Marv(msg)
 	}
